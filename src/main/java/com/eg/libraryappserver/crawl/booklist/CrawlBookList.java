@@ -1,12 +1,16 @@
 package com.eg.libraryappserver.crawl.booklist;
 
+import com.alibaba.fastjson.JSON;
 import com.eg.libraryappserver.book.Book;
 import com.eg.libraryappserver.book.BookRepository;
+import com.eg.libraryappserver.book.HoldingList;
+import com.eg.libraryappserver.book.douban.DoubanBookInfo;
 import com.eg.libraryappserver.util.Constants;
 import com.eg.libraryappserver.util.CrawlUtil;
 import com.eg.libraryappserver.util.HttpUtil;
 import com.eg.libraryappserver.util.XmlParser;
 import org.apache.commons.collections4.CollectionUtils;
+import org.apache.commons.lang3.StringUtils;
 import org.jsoup.nodes.Element;
 import org.jsoup.select.Elements;
 import org.junit.Test;
@@ -31,7 +35,7 @@ import java.util.List;
 @SpringBootTest()
 public class CrawlBookList {
     @Autowired
-    public BookRepository bookRepository;
+    BookRepository bookRepository;
 
     //每页几个
     private int rows = 100;
@@ -40,7 +44,7 @@ public class CrawlBookList {
             "&searchWay0=marc&logical0=AND&rows=" + rows;
 
     /**
-     * 从html解析出书的列表
+     * 从图书馆服务器，解析出书的列表
      * 解析出 isbn，callno，bookrecno
      *
      * @param url
@@ -100,10 +104,59 @@ public class CrawlBookList {
     private String doubanUrl_1 = "https://api.douban.com/v2/book/isbn/";
     private String doubanUrl_2 = "?apikey=0df993c66c0c636e29ecbb5344252a4a";
 
-    public void doubanSave(Book book) {
+    /**
+     * 处理豆瓣请求，获取图书信息
+     *
+     * @param book
+     */
+    private void doubanSave(Book book) {
         String isbn = book.getIsbn();
-        String s = HttpUtil.get(doubanUrl_1 + isbn + doubanUrl_2);
-        System.out.println(s);
+        //如果isbn为空
+        if (StringUtils.isEmpty(isbn)) {
+            return;
+        }
+
+        String doubanJson = HttpUtil.get(doubanUrl_1 + isbn + doubanUrl_2);
+        //如果豆瓣返回错误信息
+        if (doubanJson.contains(
+                "{\"msg\":\"book_not_found\",\"code\":6000,\"request\":\"GET \\/v2\\/book\\/isbn\\/")) {
+            System.err.println("豆瓣查找书不存在，isbn = " + isbn);
+            return;
+        }
+        DoubanBookInfo doubanBookInfo = JSON.parseObject(doubanJson, DoubanBookInfo.class);
+
+        book.setIsbn13(doubanBookInfo.getIsbn13());
+        book.setCoverImageUrl(doubanBookInfo.getImages().getLarge());
+        book.setTitle(doubanBookInfo.getTitle());
+        book.setSubtitle(doubanBookInfo.getSubtitle());
+        book.setOriginTitle(doubanBookInfo.getOrigin_title());
+        book.setAuthorList(doubanBookInfo.getAuthor());
+        book.setPublisher(doubanBookInfo.getPublisher());
+        book.setPublishDate(doubanBookInfo.getPubdate());
+        book.setPrice(doubanBookInfo.getPrice());
+        book.setPages(doubanBookInfo.getPages());
+        book.setCatalog(doubanBookInfo.getCatalog());
+        book.setSummary(doubanBookInfo.getSummary());
+        book.setDoubanBookInfoJson(doubanJson);
+    }
+
+    private String holdingListUrl_1 = "http://60.218.184.234:8091/opac/api/holding/";
+    private String holdingListUrl_2 = "?limitLibcodes=";
+
+    /**
+     * 处理holdingList
+     *
+     * @param book
+     */
+    private void handleHoldingList(Book book) {
+        String bookrecno = book.getBookrecno();
+        if (StringUtils.isEmpty(bookrecno)) {
+            System.err.println("处理holdingList，bookrecno为空！");
+            return;
+        }
+        String json = HttpUtil.get(holdingListUrl_1 + bookrecno + holdingListUrl_2);
+        HoldingList holdingList = JSON.parseObject(json, HoldingList.class);
+        book.setHoldingList(holdingList);
     }
 
     /**
@@ -113,20 +166,24 @@ public class CrawlBookList {
         //页码
         int page = 1;
         String url = baseUrl + "&page=" + page;
-        //发各种请求解析出bookList
+        //向图书馆服务器发各种请求解析出bookList
         List<Book> bookList = parseHtmlToBookList(url);
         //只要不为空
         while (bookList != null) {
             //遍历书的列表
             for (Book book : bookList) {
-                //如果数据库中还没存这本书，这里以recno作为id区分
-                if (CollectionUtils.isEmpty(bookRepository.findBooksByBookrecno(book.getBookrecno()))) {
-                    //先处理豆瓣api：
-                    doubanSave(book);
-                    //再保存到数据库
-                    bookRepository.save(book);
-                    System.out.println("write to database: " + book);
+                //以recno作为id区分，如果数据库已经有了就跳过
+                if (CollectionUtils.isNotEmpty((
+                        bookRepository.findBooksByBookrecno(book.getBookrecno())))) {
+                    System.out.println("数据库已有这本书，isbn = " + book.getIsbn());
                 }
+                //先处理豆瓣api：
+                doubanSave(book);
+                //再处理holdingList
+                handleHoldingList(book);
+                //再保存到数据库
+                bookRepository.save(book);
+                System.out.println(book.getTitle());
             }
             //继续下一页
             page++;
@@ -138,7 +195,7 @@ public class CrawlBookList {
     }
 
     @Test
-    public void runCrawlBookList() {
+    public void runTest() {
         crawlAndSave();
     }
 }
