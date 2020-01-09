@@ -1,7 +1,7 @@
 /**
   * Copyright 2020 bejson.com 
   */
-package com.eg.libraryappserver.book.douban;
+package com.eg.libraryappserver.book.bean.douban;
 
 /**
  * Auto-generated: 2020-01-09 15:44:3

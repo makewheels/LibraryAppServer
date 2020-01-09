@@ -1,4 +1,4 @@
-package com.eg.libraryappserver.book;
+package com.eg.libraryappserver.book.bean;
 
 import lombok.Data;
 import org.springframework.data.annotation.Id;

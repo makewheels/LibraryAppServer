@@ -2,10 +2,10 @@ package com.eg.libraryappserver.crawl.booklist;
 
 import com.alibaba.fastjson.JSON;
 import com.alibaba.fastjson.JSONObject;
-import com.eg.libraryappserver.book.Book;
+import com.eg.libraryappserver.book.bean.Book;
 import com.eg.libraryappserver.book.BookRepository;
-import com.eg.libraryappserver.book.Holding;
-import com.eg.libraryappserver.book.douban.DoubanBookInfo;
+import com.eg.libraryappserver.book.bean.Holding;
+import com.eg.libraryappserver.book.bean.douban.DoubanBookInfo;
 import com.eg.libraryappserver.util.Constants;
 import com.eg.libraryappserver.util.CrawlUtil;
 import com.eg.libraryappserver.util.HttpUtil;
@@ -157,7 +157,6 @@ public class CrawlBookList {
         }
         JSONObject jsonObject = JSONObject.parseObject(HttpUtil.get(holdingListUrl_1 + bookrecno + holdingListUrl_2));
         List<Holding> holdingList = JSON.parseArray(JSON.toJSONString(jsonObject.get("holdingList")), Holding.class);
-        System.out.println(holdingList);
         book.setHoldingList(holdingList);
     }
 
@@ -178,6 +177,7 @@ public class CrawlBookList {
                 if (CollectionUtils.isNotEmpty((
                         bookRepository.findBooksByBookrecno(book.getBookrecno())))) {
                     System.out.println("数据库已有这本书，isbn = " + book.getIsbn());
+                    break;
                 }
                 //先处理豆瓣api：
                 doubanSave(book);
