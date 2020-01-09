@@ -19,7 +19,7 @@ public class Book {
 
     private String isbn;// isbn
     private String callno;// 索书号
-	private String recno;// 书的id，例如：127796
+	private String bookrecno;// 书的id，例如：127796
 
 	private String coverImageUrl;// 封面图片url
 	private String name;// 书名

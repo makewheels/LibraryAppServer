@@ -9,5 +9,5 @@ import java.util.List;
  * @time 2020-01-08 23:14
  */
 public interface BookRepository extends MongoRepository<Book, String> {
-    List<Book> findBooksByRecno(String recno);
+    List<Book> findBooksByBookrecno(String recno);
 }

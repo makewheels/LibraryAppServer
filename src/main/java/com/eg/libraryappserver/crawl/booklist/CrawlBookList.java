@@ -41,7 +41,7 @@ public class CrawlBookList {
 
     /**
      * 从html解析出书的列表
-     * 解析出 isbn，callno，recno
+     * 解析出 isbn，callno，bookrecno
      *
      * @param url
      * @return
@@ -57,20 +57,20 @@ public class CrawlBookList {
             //如果没有了，就返回null
             return null;
         }
-        //解决isbn和索书号recno
+        //解决isbn和索书号bookrecno
         for (Element tr : trs) {
             String isbn = tr.child(0).child(0).child(0).attr("isbn");
-            String recno = tr.child(1).child(0).attr("bookrecno");
+            String bookrecno = tr.child(1).child(0).attr("bookrecno");
             Book book = new Book();
             book.setIsbn(isbn);
-            book.setRecno(recno);
+            book.setBookrecno(bookrecno);
             book.setCreateTime(new Date());
             bookList.add(book);
         }
         // 再发请求，获取索书号
         StringBuilder bookrecnos = new StringBuilder();
         for (Book book : bookList) {
-            bookrecnos.append(book.getRecno() + ",");
+            bookrecnos.append(book.getBookrecno() + ",");
         }
         bookrecnos.deleteCharAt(bookrecnos.length() - 1);
         String xml = null;
@@ -85,7 +85,7 @@ public class CrawlBookList {
         // 设置到每一个book中
         for (int i = 0; i < bookList.size(); i++) {
             Book book = bookList.get(i);
-            String bookrecno = book.getRecno();
+            String bookrecno = book.getBookrecno();
             for (org.dom4j.Element record : records) {
                 if (bookrecno.equals(record.element("bookrecno").getText())) {
                     String callno = record.element("callno").getText();
@@ -120,8 +120,7 @@ public class CrawlBookList {
             //遍历书的列表
             for (Book book : bookList) {
                 //如果数据库中还没存这本书，这里以recno作为id区分
-                List<Book> booksByRecno = bookRepository.findBooksByRecno(book.getRecno());
-                if (CollectionUtils.isEmpty(booksByRecno)) {
+                if (CollectionUtils.isEmpty(bookRepository.findBooksByBookrecno(book.getBookrecno()))) {
                     //先处理豆瓣api：
                     doubanSave(book);
                     //再保存到数据库
@@ -131,6 +130,7 @@ public class CrawlBookList {
             }
             //继续下一页
             page++;
+            //刷新url
             url = baseUrl + "&page=" + page;
             bookList = parseHtmlToBookList(url);
             System.out.println("page = " + page);
