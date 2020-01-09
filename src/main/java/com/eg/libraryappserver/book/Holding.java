@@ -10,7 +10,7 @@ import java.util.Date;
  * http://60.218.184.234:8091/opac/api/holding/127796?limitLibcodes=
  * 里面有条码号
  */
-public class HoldingList {
+public class Holding {
 
     private long recno;
     private long bookrecno;

@@ -24,7 +24,7 @@ public class Book {
     private String bookrecno;// 书的id，例如：127796
     private Date createTime;//创建时间
 
-    private HoldingList holdingList;
+    private List<Holding> holdingList;
 
     //豆瓣api拿到的：
     private String isbn13;           //没有横杠，纯数字
