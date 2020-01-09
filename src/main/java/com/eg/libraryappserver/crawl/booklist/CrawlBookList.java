@@ -177,7 +177,7 @@ public class CrawlBookList {
                 if (CollectionUtils.isNotEmpty((
                         bookRepository.findBooksByBookrecno(book.getBookrecno())))) {
                     System.out.println("数据库已有这本书，isbn = " + book.getIsbn());
-                    break;
+                    continue;
                 }
                 //先处理豆瓣api：
                 doubanSave(book);
