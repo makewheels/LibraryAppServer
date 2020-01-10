@@ -65,6 +65,15 @@ public class CrawlBookList {
         //解决isbn和索书号bookrecno
         for (Element tr : trs) {
             String isbn = tr.child(0).child(0).child(0).attr("isbn");
+            isbn = isbn.replace(" (pbk) :", "");
+            isbn = isbn.replace(" (hbk.) :", "");
+            isbn = isbn.replace(" (pbk.)  :", "");
+            isbn = isbn.replace(" (pbk.) :", "");
+            isbn = isbn.replace(" (cased) :", "");
+            isbn = isbn.replace(" (cased.) :", "");
+            isbn = isbn.replace(" (hbk) :", "");
+            isbn = isbn.replace(" (pbk.):", "");
+            System.out.println("final isbn: " + isbn);
             String bookrecno = tr.child(1).child(0).attr("bookrecno");
             Book book = new Book();
             book.setIsbn(isbn);
@@ -165,7 +174,7 @@ public class CrawlBookList {
      */
     public void crawlAndSave() {
         //页码
-        int page = 1;
+        int page = 761;
         String url = baseUrl + "&page=" + page;
         //向图书馆服务器发各种请求解析出bookList
         List<Book> bookList = parseHtmlToBookList(url);
