@@ -30,7 +30,7 @@ public class HttpUtil {
     private static String contentType = "application/x-www-form-urlencoded";
 
 
-    public static String tryGet(String url) {
+    public static String tryGet(String url) throws IOException {
         CloseableHttpClient client = HttpClients.createDefault();
         HttpGet httpGet = new HttpGet();
         httpGet.addHeader("User-Agent", userAgent);
@@ -39,18 +39,9 @@ public class HttpUtil {
         System.out.println("HttpClient GET: " + url);
         httpGet.setURI(URI.create(url));
         CloseableHttpResponse response = null;
-        try {
-            response = client.execute(httpGet);
-        } catch (IOException e) {
-            e.printStackTrace();
-        }
+        response = client.execute(httpGet);
         HttpEntity entity = response.getEntity();
-        try {
-            return EntityUtils.toString(entity, Constants.CHARSET);
-        } catch (ParseException | IOException e) {
-            e.printStackTrace();
-        }
-        return null;
+        return EntityUtils.toString(entity, Constants.CHARSET);
     }
 
     public static String get(String url) {
@@ -58,8 +49,13 @@ public class HttpUtil {
             return tryGet(url);
         } catch (Exception e) {
             System.err.println("http get error: " + e.getMessage() + ", retry " + url);
-            return tryGet(url);
+            try {
+                return tryGet(url);
+            } catch (IOException ex) {
+                ex.printStackTrace();
+            }
         }
+        return null;
     }
 
     /**
