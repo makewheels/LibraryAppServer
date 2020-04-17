@@ -1,0 +1,28 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <title>图书馆助手</title>
+    <meta name="viewport"
+          content="width=device-width, height=device-height, initial-scale=1, maximum-scale=1, minimum-scale=1, user-scalable=no"/>
+    <link href="https://cdn.staticfile.org/mui/3.7.1/css/mui.min.css" rel="stylesheet">
+    <script src="https://cdn.staticfile.org/mui/3.7.1/js/mui.min.js"></script>
+    <script src="common/common.js"></script>
+</head>
+<body>
+<div style="text-align: center;">
+    <ul class="mui-table-view">
+        <li class="mui-table-view-cell">Item 1</li>
+        <li class="mui-table-view-cell">Item 2</li>
+        <li class="mui-table-view-cell">Item 3</li>
+    </ul>
+    <button id="btn_search" type="button" class="mui-btn mui-btn-primary">Search</button>
+    <script>
+        document.getElementById('btn_search').addEventListener('tap', function (evt) {
+            var q = document.getElementById('input_search').value;
+            window.location.href = baseurl + '/book/search?q=' + encodeURI(q);
+        });
+    </script>
+</div>
+</body>
+</html>

@@ -1,7 +1,7 @@
 /**
  * Copyright 2020 bejson.com
  */
-package com.eg.libraryappserver.book.bean;
+package com.eg.libraryappserver.book.bean.library;
 
 import java.util.Date;
 

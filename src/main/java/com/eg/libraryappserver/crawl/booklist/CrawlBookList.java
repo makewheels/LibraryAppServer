@@ -2,9 +2,9 @@ package com.eg.libraryappserver.crawl.booklist;
 
 import com.alibaba.fastjson.JSON;
 import com.alibaba.fastjson.JSONObject;
-import com.eg.libraryappserver.book.bean.Book;
+import com.eg.libraryappserver.book.bean.library.Book;
 import com.eg.libraryappserver.book.BookRepository;
-import com.eg.libraryappserver.book.bean.Holding;
+import com.eg.libraryappserver.book.bean.library.Holding;
 import com.eg.libraryappserver.book.bean.douban.DoubanBookInfo;
 import com.eg.libraryappserver.util.Constants;
 import com.eg.libraryappserver.util.CrawlUtil;
@@ -36,7 +36,7 @@ import java.util.List;
 @SpringBootTest()
 public class CrawlBookList {
     @Autowired
-    BookRepository bookRepository;
+    private BookRepository bookRepository;
 
     //每页几个
     private int rows = 100;
@@ -67,12 +67,14 @@ public class CrawlBookList {
             String isbn = tr.child(0).child(0).child(0).attr("isbn");
             isbn = isbn.replace(" (pbk) :", "");
             isbn = isbn.replace(" (pbk.):", "");
+            isbn = isbn.replace("(pbk.)", "");
             isbn = isbn.replace(" (pbk.) :", "");
             isbn = isbn.replace(" (pbk.)  :", "");
             isbn = isbn.replace(" (hbk) :", "");
             isbn = isbn.replace(" (hbk.) :", "");
             isbn = isbn.replace(" (cased) :", "");
             isbn = isbn.replace(" (cased.) :", "");
+            isbn = isbn.replace(":", "");
             isbn = isbn.replace(" ", "");
             System.out.println("final isbn: " + isbn);
             String bookrecno = tr.child(1).child(0).attr("bookrecno");
@@ -175,7 +177,7 @@ public class CrawlBookList {
      */
     public void crawlAndSave() {
         //页码
-        int page = 1035;
+        int page = 1590;
         String url = baseUrl + "&page=" + page;
         //向图书馆服务器发各种请求解析出bookList
         List<Book> bookList = parseHtmlToBookList(url);

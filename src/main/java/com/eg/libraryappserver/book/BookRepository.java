@@ -1,6 +1,6 @@
 package com.eg.libraryappserver.book;
 
-import com.eg.libraryappserver.book.bean.Book;
+import com.eg.libraryappserver.book.bean.library.Book;
 import org.springframework.data.mongodb.repository.MongoRepository;
 
 import java.util.List;
@@ -11,5 +11,5 @@ import java.util.List;
 public interface BookRepository extends MongoRepository<Book, String> {
     List<Book> findBooksByBookrecno(String recno);
 
-    List<Book> findBooksByTitle(String q);
+    List<Book> findBookByTitleContains(String q);
 }
