@@ -19,9 +19,9 @@ public class Book {
     private String _id;
 
     //一次图书馆爬虫所拿到的：
-    private String isbn;            // isbn从图书馆网站爬下来，带横杠
-    private String callno;          // 索书号
-    private String bookrecno;       // 书的id，例如：127796
+    private String isbn;            //isbn从图书馆网站爬下来，带横杠
+    private String callno;          //索书号
+    private String bookrecno;       //书的id，例如：127796
     private Date createTime;        //创建时间
 
     private List<Holding> holdingList;
