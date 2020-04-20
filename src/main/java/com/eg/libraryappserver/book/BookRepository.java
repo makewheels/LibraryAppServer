@@ -1,6 +1,7 @@
 package com.eg.libraryappserver.book;
 
 import com.eg.libraryappserver.book.bean.library.Book;
+import org.springframework.data.domain.PageRequest;
 import org.springframework.data.mongodb.repository.MongoRepository;
 
 import java.util.List;
@@ -11,5 +12,5 @@ import java.util.List;
 public interface BookRepository extends MongoRepository<Book, String> {
     List<Book> findBooksByBookrecno(String recno);
 
-    List<Book> findBookByTitleContains(String q);
+    List<Book> findBookByTitleContains(String q, PageRequest pageRequest);
 }

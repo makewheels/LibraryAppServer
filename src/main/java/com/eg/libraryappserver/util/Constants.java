@@ -29,6 +29,10 @@ public class Constants {
     public static String SIMPLE_INFO_URL_END = "?view=simple";
 
     //豆瓣api key
-	public static String DOUBAN_API_KEY_PARAM_NAME = "apikey";
-	public static String DOUBAN_API_KEY = "0df993c66c0c636e29ecbb5344252a4a";
+    public static String DOUBAN_API_KEY_PARAM_NAME = "apikey";
+    public static String DOUBAN_API_KEY = "0df993c66c0c636e29ecbb5344252a4a";
+
+    //app version
+    public static int APP_VERSION_CODE = 1;
+    public static String APP_VERSION_NAME = "1.0";
 }

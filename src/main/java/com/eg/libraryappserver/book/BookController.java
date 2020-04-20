@@ -7,8 +7,8 @@ import com.eg.libraryappserver.book.bean.response.query.BookQueryRecord;
 import com.eg.libraryappserver.book.bean.response.query.BookQueryResponse;
 import org.apache.commons.beanutils.BeanUtils;
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.data.domain.PageRequest;
 import org.springframework.stereotype.Controller;
-import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RequestParam;
 import org.springframework.web.bind.annotation.ResponseBody;
@@ -16,8 +16,6 @@ import org.springframework.web.bind.annotation.ResponseBody;
 import java.lang.reflect.InvocationTargetException;
 import java.util.ArrayList;
 import java.util.List;
-import java.util.Map;
-import java.util.Optional;
 
 /**
  * @time 2020-01-09 21:52
@@ -32,12 +30,21 @@ public class BookController {
      * 根据关键词查询书的列表
      *
      * @param q
+     * @param page
+     * @param size
      * @return
      */
     @RequestMapping("/search")
     @ResponseBody
-    public String queryBook(@RequestParam String q) {
-        List<Book> booksByTitle = bookRepository.findBookByTitleContains(q);
+    public String queryBook(@RequestParam String q,
+                            @RequestParam int page,
+                            @RequestParam int size) {
+        if (size != 20) {
+            size = 20;
+        }
+        //分页查询
+        PageRequest pageRequest = PageRequest.of(page, size);
+        List<Book> booksByTitle = bookRepository.findBookByTitleContains(q, pageRequest);
         if (booksByTitle == null) {
             return null;
         }
