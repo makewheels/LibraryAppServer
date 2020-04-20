@@ -11,7 +11,7 @@ import java.util.List;
  */
 @Data
 public class BookDetailResponse {
-    private String id;
+    private String mangoId;
     //一次图书馆爬虫所拿到的：
     private String isbn;            //isbn从图书馆网站爬下来，带横杠
     private String callno;          //索书号

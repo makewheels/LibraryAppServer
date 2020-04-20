@@ -9,7 +9,7 @@ import java.util.List;
  */
 @Data
 public class BookQueryRecord {
-    private String id;
+    private String mangoId;
     private String isbn;            //isbn从图书馆网站爬下来，带横杠
     private String isbn13;          //没有横杠，纯数字
     private String callno;          //索书号

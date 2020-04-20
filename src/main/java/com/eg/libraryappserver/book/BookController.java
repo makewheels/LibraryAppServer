@@ -63,7 +63,7 @@ public class BookController {
                 e.printStackTrace();
             }
             //设置mango id
-            bookQueryRecord.setId(book.get_id());
+            bookQueryRecord.setMangoId(book.get_id());
             bookQueryRecordList.add(bookQueryRecord);
         }
         return JSON.toJSONString(bookQueryResponse);
@@ -72,14 +72,14 @@ public class BookController {
     /**
      * 通过id查询书的详情信息
      *
-     * @param id
+     * @param mangoId
      * @return
      */
     @RequestMapping("/getBookDetail")
     @ResponseBody
-    public String getBookDetail(@RequestParam String id) {
+    public String getBookDetail(@RequestParam String mangoId) {
         //查询数据库
-        Book book = bookRepository.findById(id).get();
+        Book book = bookRepository.findById(mangoId).get();
         BookDetailResponse bookDetailResponse = new BookDetailResponse();
         //拷贝属性
         try {
@@ -87,7 +87,7 @@ public class BookController {
         } catch (IllegalAccessException | InvocationTargetException e) {
             e.printStackTrace();
         }
-        bookDetailResponse.setId(book.get_id());
+        bookDetailResponse.setMangoId(book.get_id());
         return JSON.toJSONString(bookDetailResponse);
     }
 
