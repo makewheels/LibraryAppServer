@@ -3,19 +3,29 @@ package com.eg.libraryappserver;
 import com.alibaba.fastjson.JSON;
 import com.eg.libraryappserver.bean.book.Book;
 import com.eg.libraryappserver.bean.book.BookRepository;
+import com.eg.libraryappserver.bean.book.library.holding.Holding;
+import com.eg.libraryappserver.bean.book.library.holding.Position;
+import com.eg.libraryappserver.bean.book.library.holding.positionmission.BarcodePosition;
+import com.eg.libraryappserver.bean.book.library.holding.positionmission.BookPosition;
 import com.eg.libraryappserver.bean.response.detail.BookDetailResponse;
 import com.eg.libraryappserver.bean.response.query.BookQueryRecord;
 import com.eg.libraryappserver.bean.response.query.BookQueryResponse;
 import org.apache.commons.beanutils.BeanUtils;
+import org.apache.commons.codec.digest.DigestUtils;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.data.domain.PageRequest;
+import org.springframework.data.mongodb.core.MongoTemplate;
+import org.springframework.data.mongodb.core.query.Criteria;
+import org.springframework.data.mongodb.core.query.Query;
 import org.springframework.stereotype.Controller;
+import org.springframework.web.bind.annotation.PostMapping;
 import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RequestParam;
 import org.springframework.web.bind.annotation.ResponseBody;
 
 import java.lang.reflect.InvocationTargetException;
 import java.util.ArrayList;
+import java.util.Date;
 import java.util.List;
 
 /**
@@ -23,9 +33,91 @@ import java.util.List;
  */
 @Controller
 @RequestMapping("/book")
+@ResponseBody
 public class BookController {
-    @Autowired
     private BookRepository bookRepository;
+
+    @Autowired
+    public void setBookRepository(BookRepository bookRepository) {
+        this.bookRepository = bookRepository;
+    }
+
+    private MongoTemplate mongoTemplate;
+
+    @Autowired
+    public void setMongoTemplate(MongoTemplate mongoTemplate) {
+        this.mongoTemplate = mongoTemplate;
+    }
+
+    /**
+     * 请求书的位置任务
+     *
+     * @param password
+     * @return
+     */
+    @RequestMapping("/requestPositionMission")
+    public String requestPositionMission(@RequestParam String password) {
+        if (password == null || !password.equals("ETwrayANWeniq6HY"))
+            return null;
+        Query query = Query.query(Criteria.where("fromLibrary.holdingList").ne("[]"));
+        query.limit(10);
+        List<Book> books = mongoTemplate.find(query, Book.class);
+        List<BookPosition> responseList = new ArrayList<>();
+        for (Book book : books) {
+            BookPosition bookPosition = new BookPosition();
+            bookPosition.setBookId(book.getBookId());
+            List<BarcodePosition> barcodePositionList = new ArrayList<>();
+            List<Holding> holdingList = book.getFromLibrary().getHoldingList();
+            for (Holding holding : holdingList) {
+                BarcodePosition barcodePosition = new BarcodePosition();
+                barcodePosition.setBarcode(holding.getBarcode());
+                barcodePositionList.add(barcodePosition);
+            }
+            bookPosition.setBarcodePositionList(barcodePositionList);
+            responseList.add(bookPosition);
+        }
+        return JSON.toJSONString(responseList);
+    }
+
+    /**
+     * 提交书的位置任务
+     *
+     * @param provider
+     * @return
+     */
+    @PostMapping("/submitPositionMission")
+    public String submitPositionMission(@RequestParam String provider,
+                                        @RequestParam String bookPositionJson) {
+        BookPosition bookPosition = JSON.parseObject(bookPositionJson, BookPosition.class);
+        List<BarcodePosition> barcodePositionList = bookPosition.getBarcodePositionList();
+        for (BarcodePosition barcodePosition : barcodePositionList) {
+            String barcode = barcodePosition.getBarcode();
+            String position = barcodePosition.getPosition();
+            long timestamp = barcodePosition.getTimestamp();
+            String clientSign = barcodePosition.getSign();
+            String serverSign = DigestUtils.md5Hex(barcode + position + timestamp + "vPUYt6q1AzmmjzXG");
+            if (!clientSign.equals(serverSign))
+                return null;
+        }
+        String bookId = bookPosition.getBookId();
+        Book book = bookRepository.findBookByBookId(bookId);
+        List<Holding> holdingList = book.getFromLibrary().getHoldingList();
+        for (Holding holding : holdingList) {
+            String barcode = holding.getBarcode();
+            BarcodePosition barcodePosition = null;
+            for (BarcodePosition each : barcodePositionList) {
+                if (barcode.equals(each.getBarcode()))
+                    barcodePosition = each;
+            }
+            Position position = new Position();
+            position.setCreateTime(new Date());
+            position.setPosition(barcodePosition.getPosition());
+            position.setRoomName("");
+            holding.setPosition(position);
+        }
+        bookRepository.save(book);
+        return "ok";
+    }
 
     /**
      * 根据关键词查询书的列表
@@ -36,7 +128,6 @@ public class BookController {
      * @return
      */
     @RequestMapping("/search")
-    @ResponseBody
     public String queryBook(@RequestParam String q,
                             @RequestParam int page,
                             @RequestParam int size) {
@@ -77,7 +168,6 @@ public class BookController {
      * @return
      */
     @RequestMapping("/getBookDetail")
-    @ResponseBody
     public String getBookDetail(@RequestParam String mangoId) {
         //查询数据库
         Book book = bookRepository.findById(mangoId).get();

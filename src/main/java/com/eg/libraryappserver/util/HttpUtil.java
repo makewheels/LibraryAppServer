@@ -51,13 +51,28 @@ public class HttpUtil {
 
     public static String get(String url) {
         try {
+            //执行第一次
             return tryGetOnce(url);
         } catch (Exception e) {
-            System.err.println("http get error: " + e.getMessage() + ", retry " + url);
+            //第一次错误
+            System.err.println("http get error: " + e.getMessage());
+            System.out.println("retry 1: " + url);
             try {
+                //执行第二次
                 return tryGetOnce(url);
             } catch (IOException ex) {
-                ex.printStackTrace();
+                //第二次错误
+                System.err.println("http get error: " + e.getMessage());
+                System.out.println("retry 2: " + url);
+                try {
+                    //执行第三次
+                    return tryGetOnce(url);
+                } catch (IOException exc) {
+                    //第三次错误
+                    System.err.println("http get error: " + e.getMessage());
+                    System.out.println("retry 1: " + url);
+                    exc.printStackTrace();
+                }
             }
         }
         return null;

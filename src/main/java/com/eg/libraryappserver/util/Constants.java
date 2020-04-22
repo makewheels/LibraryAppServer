@@ -19,7 +19,7 @@ public class Constants {
     // 最大并发任务数量
     public static long MAX_MISSION_AMOUNT = 200;
     // 本地资源根目录
-    public static String RESOURCES_BASE_PATH = "D:\\workSpace\\sts\\BookPosition\\src\\main\\resources";
+    public static String RESOURCES_BASE_PATH = "D:\\workSpace\\sts\\BarcodePosition\\src\\main\\resources";
     // 外网
     public static String BASE_URL = "http://60.218.184.234:8091";
     // 内网查询图书定位

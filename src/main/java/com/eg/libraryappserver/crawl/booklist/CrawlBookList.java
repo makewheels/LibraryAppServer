@@ -42,10 +42,21 @@ import java.util.*;
 @RunWith(SpringRunner.class)
 @SpringBootTest()
 public class CrawlBookList {
-    @Autowired
+    //是否保存到数据库开关
+    private boolean saveSwitch = true;
     private BookRepository bookRepository;
+
     @Autowired
+    public void setBookRepository(BookRepository bookRepository) {
+        this.bookRepository = bookRepository;
+    }
+
     private BorrowRecordRepository borrowRecordRepository;
+
+    @Autowired
+    public void setBorrowRecordRepository(BorrowRecordRepository borrowRecordRepository) {
+        this.borrowRecordRepository = borrowRecordRepository;
+    }
 
     //每页几个
     private int rows = 100;
@@ -258,7 +269,8 @@ public class CrawlBookList {
             BorrowRecord borrowRecord = loanWorkMap.get(key);
             borrowRecord.setBookId(bookId);
             borrowRecord.setCreateTime(new Date());
-//            borrowRecordRepository.save(borrowRecord);
+            if (saveSwitch)
+                borrowRecordRepository.save(borrowRecord);
         }
     }
 
@@ -361,14 +373,12 @@ public class CrawlBookList {
                 //整合数据资源
                 integrateDataResources(book);
                 //保存到数据库
-//                bookRepository.save(book);
+                if (saveSwitch)
+                    bookRepository.save(book);
                 System.out.println(book.getBookId() + " " + book.getFromLibrary().getTitle());
             }
             //继续下一页
             page++;
-            for (Book book : bookList) {
-                System.out.println(book.getBookId() + " " + book.getCoverUrl());
-            }
             //刷新url
             url = baseUrl + "&page=" + page;
             bookList = parseHtmlToBookList(url);

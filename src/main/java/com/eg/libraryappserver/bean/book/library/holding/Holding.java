@@ -6,6 +6,8 @@ import java.util.Date;
 
 @Data
 public class Holding {
+    private Position position;//位置
+
     private long recno;
     private long bookrecno;
     private int state;
