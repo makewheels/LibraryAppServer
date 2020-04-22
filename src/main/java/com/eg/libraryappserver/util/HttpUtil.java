@@ -3,6 +3,7 @@ package com.eg.libraryappserver.util;
 import org.apache.http.HttpEntity;
 import org.apache.http.NameValuePair;
 import org.apache.http.ParseException;
+import org.apache.http.client.config.RequestConfig;
 import org.apache.http.client.entity.UrlEncodedFormEntity;
 import org.apache.http.client.methods.CloseableHttpResponse;
 import org.apache.http.client.methods.HttpGet;
@@ -36,9 +37,14 @@ public class HttpUtil {
         httpGet.setHeader("Content-type", contentType);
         httpGet.setHeader("Connection", "keep-alive");
         System.out.println("HttpClient GET: " + url);
+        RequestConfig requestConfig = RequestConfig.custom()
+                .setConnectTimeout(20000)
+                .setConnectionRequestTimeout(20000)
+                .setSocketTimeout(20000)
+                .build();
+        httpGet.setConfig(requestConfig);
         httpGet.setURI(URI.create(url));
-        CloseableHttpResponse response = null;
-        response = client.execute(httpGet);
+        CloseableHttpResponse response = client.execute(httpGet);
         HttpEntity entity = response.getEntity();
         return EntityUtils.toString(entity, Constants.CHARSET);
     }

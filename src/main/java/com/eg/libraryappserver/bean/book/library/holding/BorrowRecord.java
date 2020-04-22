@@ -1,4 +1,4 @@
-package com.eg.libraryappserver.bean.book.library.imageapi.holding;
+package com.eg.libraryappserver.bean.book.library.holding;
 
 import lombok.Data;
 import org.springframework.data.mongodb.core.mapping.Document;

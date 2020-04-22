@@ -2,6 +2,7 @@ package com.eg.libraryappserver;
 
 import com.alibaba.fastjson.JSON;
 import com.eg.libraryappserver.bean.book.Book;
+import com.eg.libraryappserver.bean.book.BookRepository;
 import com.eg.libraryappserver.bean.response.detail.BookDetailResponse;
 import com.eg.libraryappserver.bean.response.query.BookQueryRecord;
 import com.eg.libraryappserver.bean.response.query.BookQueryResponse;

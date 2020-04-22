@@ -2,12 +2,15 @@ package com.eg.libraryappserver.crawl.booklist;
 
 import com.alibaba.fastjson.JSON;
 import com.alibaba.fastjson.JSONObject;
-import com.eg.libraryappserver.BookRepository;
+import com.eg.libraryappserver.bean.book.BookRepository;
 import com.eg.libraryappserver.bean.book.Book;
 import com.eg.libraryappserver.bean.book.douban.FromDouban;
 import com.eg.libraryappserver.bean.book.library.FromLibrary;
+import com.eg.libraryappserver.bean.book.library.holding.BorrowRecordRepository;
 import com.eg.libraryappserver.bean.book.library.imageapi.LibraryImageApiResult;
 import com.eg.libraryappserver.bean.book.library.imageapi.Result;
+import com.eg.libraryappserver.bean.book.library.holding.BorrowRecord;
+import com.eg.libraryappserver.bean.book.library.holding.Holding;
 import com.eg.libraryappserver.util.*;
 import org.apache.commons.collections4.CollectionUtils;
 import org.apache.commons.lang3.RandomStringUtils;
@@ -23,9 +26,7 @@ import us.codecraft.xsoup.Xsoup;
 
 import java.io.UnsupportedEncodingException;
 import java.net.URLEncoder;
-import java.util.ArrayList;
-import java.util.Date;
-import java.util.List;
+import java.util.*;
 
 /**
  * 爬取书的列表
@@ -43,6 +44,8 @@ import java.util.List;
 public class CrawlBookList {
     @Autowired
     private BookRepository bookRepository;
+    @Autowired
+    private BorrowRecordRepository borrowRecordRepository;
 
     //每页几个
     private int rows = 100;
@@ -120,7 +123,6 @@ public class CrawlBookList {
             Element bookmeta = bookmetaTD.child(0);
             //图书馆获取图片url的api
             if (StringUtils.isNoneBlank(isbn)) {
-                System.out.println(isbn + "======");
                 LibraryImageApiResult libraryImageApi = getLibraryImageApi(isbn.replace("-", ""));
                 if (libraryImageApi != null) {
                     List<Result> resultList = libraryImageApi.getResult();
@@ -186,9 +188,6 @@ public class CrawlBookList {
         return bookList;
     }
 
-    private String doubanUrl_1 = "https://api.douban.com/v2/book/isbn/";
-    private String doubanUrl_2 = "?apikey=0df993c66c0c636e29ecbb5344252a4a";
-
     /**
      * 处理豆瓣请求，获取图书信息，保存到book中
      *
@@ -200,6 +199,8 @@ public class CrawlBookList {
         if (StringUtils.isEmpty(isbn)) {
             return;
         }
+        String doubanUrl_1 = "https://api.douban.com/v2/book/isbn/";
+        String doubanUrl_2 = "?apikey=0df993c66c0c636e29ecbb5344252a4a";
         String doubanJson = HttpUtil.get(doubanUrl_1 + isbn + doubanUrl_2);
         //如果豆瓣返回错误信息
         if (doubanJson.equals(
@@ -211,10 +212,6 @@ public class CrawlBookList {
         book.setFromDouban(fromDouban);
     }
 
-    //查询holdingList接口url
-    private String holdingListUrl_1 = "http://60.218.184.234:8091/opac/api/holding/";
-    private String holdingListUrl_2 = "?limitLibcodes=";
-
     /**
      * 处理holdingApi
      * <p>
@@ -223,15 +220,118 @@ public class CrawlBookList {
      * @param book
      */
     private void handleHoldingApi(Book book) {
-        String bookrecno = book.getFromLibrary().getBookrecno();
+        FromLibrary fromLibrary = book.getFromLibrary();
+        String bookId = book.getBookId();
+        String bookrecno = fromLibrary.getBookrecno();
         if (StringUtils.isEmpty(bookrecno)) {
-            System.err.println("处理holdingList，bookrecno为空！ bookId=" + book.getBookId());
+            System.err.println("处理holdingList，bookrecno为空！ bookId=" + bookId);
             return;
         }
+        //查询holdingList接口url
+        String holdingListUrl_1 = "http://60.218.184.234:8091/opac/api/holding/";
+        String holdingListUrl_2 = "?limitLibcodes=";
         String json = HttpUtil.get(holdingListUrl_1 + bookrecno + holdingListUrl_2);
         JSONObject jsonObject = JSONObject.parseObject(json);
-//        List<Holding> holdingList = JSON.parseArray(JSON.toJSONString(jsonObject.get("holdingList")), Holding.class);
-//        book.getFromLibrary().setHoldingList(holdingList);
+        //holdingList
+        List<Holding> holdingList = JSON.parseArray(JSON.toJSONString(jsonObject.get("holdingList")), Holding.class);
+        fromLibrary.setHoldingList(holdingList);
+        //统计借阅数，续借数
+        int borrowCount = 0;
+        int renewCount = 0;
+        for (Holding holding : holdingList) {
+            borrowCount += holding.getTotalLoanNum();
+            renewCount += holding.getTotalRenewNum();
+        }
+        fromLibrary.setBorrowCount(borrowCount);
+        fromLibrary.setRenewCount(renewCount);
+        //loanWorkMap
+        Map jsonLoanWorkMap = jsonObject.getJSONObject("loanWorkMap");
+        Set set = jsonLoanWorkMap.keySet();
+        Map<String, BorrowRecord> loanWorkMap = new HashMap<>();
+        for (Object key : set) {
+            BorrowRecord borrowRecord = JSON.parseObject(JSON.toJSONString(jsonLoanWorkMap.get(key)), BorrowRecord.class);
+            loanWorkMap.put((String) key, borrowRecord);
+        }
+        //loanWorkMap已就绪
+        Set<String> keySet = loanWorkMap.keySet();
+        for (String key : keySet) {
+            BorrowRecord borrowRecord = loanWorkMap.get(key);
+            borrowRecord.setBookId(bookId);
+            borrowRecord.setCreateTime(new Date());
+//            borrowRecordRepository.save(borrowRecord);
+        }
+    }
+
+    /**
+     * 整合数据资源
+     * 整合各种来路的数据资源，包括，图书馆，豆瓣...
+     * 放到book下
+     *
+     * @param book
+     */
+    private void integrateDataResources(Book book) {
+        FromLibrary fromLibrary = book.getFromLibrary();
+        FromDouban fromDouban = book.getFromDouban();
+        String title = fromLibrary.getTitle();
+        if (StringUtils.isNotBlank(title))
+            book.setTitle(title);
+        else if (fromDouban != null && StringUtils.isNotEmpty(fromDouban.getTitle()))
+            book.setTitle(fromDouban.getTitle());
+        book.setIsbn(fromLibrary.getIsbn());
+        book.setCallno(fromLibrary.getCallno());
+        book.setBookrecno(fromLibrary.getBookrecno());
+        String author = fromLibrary.getAuthor();
+        if (StringUtils.isNotBlank(author)) {
+            book.setAuthor(author);
+        } else if (fromDouban != null && CollectionUtils.isNotEmpty(fromDouban.getAuthor())) {
+            //组装作者
+            List<String> authorList = fromDouban.getAuthor();
+            StringBuilder doubanAuthor = new StringBuilder();
+            doubanAuthor.append(authorList.get(0));
+            for (int i = 1; i < authorList.size(); i++) {
+                doubanAuthor.append("," + authorList.get(i));
+            }
+            book.setAuthor(doubanAuthor.toString());
+        }
+        String publisher = fromLibrary.getPublisher();
+        if (StringUtils.isNotBlank(publisher))
+            book.setPublisher(publisher);
+        else if (fromDouban != null && StringUtils.isNotEmpty(fromDouban.getPublisher()))
+            book.setPublisher(fromDouban.getPublisher());
+        String publishDate = fromLibrary.getPublishDate();
+        if (StringUtils.isNotBlank(publishDate))
+            book.setPublishDate(publishDate);
+        else if (fromDouban != null && StringUtils.isNotEmpty(fromDouban.getPubdate()))
+            book.setPublishDate(fromDouban.getPubdate());
+        if (fromDouban != null && StringUtils.isNotEmpty(fromDouban.getCatalog()))
+            book.setCatalog(fromDouban.getCatalog());
+        if (fromDouban != null && StringUtils.isNotEmpty(fromDouban.getSummary()))
+            book.setSummary(fromDouban.getSummary());
+        //封面图片url
+        String resultImage;
+        //豆瓣图片
+        String doubanImage = null;
+        if (fromDouban != null && fromDouban.getImages() != null
+                && StringUtils.isNotEmpty(fromDouban.getImages().getLarge()))
+            doubanImage = fromDouban.getImages().getLarge();
+        String coverlink = fromLibrary.getCoverlink();
+        String resourceLink = fromLibrary.getResourceLink();
+        String libraryImage;
+        //选出图书馆图片
+        if (StringUtils.isEmpty(resourceLink) && StringUtils.isNotEmpty(coverlink))
+            libraryImage = coverlink;
+        else if (StringUtils.isNotEmpty(coverlink)
+                && coverlink.contains("doubanio.com")
+                && coverlink.contains("default"))
+            libraryImage = resourceLink;
+        else
+            libraryImage = resourceLink;
+        //如果没有豆瓣图片，或者是default，则用图书馆图片
+        if (StringUtils.isNotEmpty(doubanImage) && doubanImage.contains("default") == false)
+            resultImage = doubanImage;
+        else
+            resultImage = libraryImage;
+        book.setCoverUrl(resultImage);
     }
 
     /**
@@ -258,12 +358,17 @@ public class CrawlBookList {
                 handleDouban(book);
                 //处理holdingApi
                 handleHoldingApi(book);
+                //整合数据资源
+                integrateDataResources(book);
                 //保存到数据库
 //                bookRepository.save(book);
-                System.out.println(JSON.toJSONString(book));
+                System.out.println(book.getBookId() + " " + book.getFromLibrary().getTitle());
             }
             //继续下一页
             page++;
+            for (Book book : bookList) {
+                System.out.println(book.getBookId() + " " + book.getCoverUrl());
+            }
             //刷新url
             url = baseUrl + "&page=" + page;
             bookList = parseHtmlToBookList(url);

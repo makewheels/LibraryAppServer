@@ -7,7 +7,6 @@ import org.springframework.data.annotation.Id;
 import org.springframework.data.mongodb.core.mapping.Document;
 
 import java.util.Date;
-import java.util.List;
 
 /**
  * 一种书
@@ -32,10 +31,9 @@ public class Book {
     private String bookrecno;       //书的id，例如：127796
 
     private String title;           //书名
-    private List<String> authorList;//作者列表
+    private String author;          //作者列表
     private String publisher;       //出版社
     private String publishDate;     //出版日期
-    private String pages;           //页码数
     private String catalog;         //目录
     private String summary;         //简述
     private String coverUrl;        //封面图片

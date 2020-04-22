@@ -1,6 +1,6 @@
 package com.eg.libraryappserver.bean.book.library;
 
-import com.eg.libraryappserver.bean.book.library.imageapi.holding.Holding;
+import com.eg.libraryappserver.bean.book.library.holding.Holding;
 import lombok.Data;
 
 import java.util.List;
