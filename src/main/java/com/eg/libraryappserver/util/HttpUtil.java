@@ -29,7 +29,7 @@ public class HttpUtil {
     private static String userAgent = "Mozilla/5.0 (Windows NT 6.1; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/73.0.3683.86 Safari/537.36";
     private static String contentType = "application/x-www-form-urlencoded";
 
-    public static String tryGet(String url) throws IOException {
+    public static String tryGetOnce(String url) throws IOException {
         CloseableHttpClient client = HttpClients.createDefault();
         HttpGet httpGet = new HttpGet();
         httpGet.addHeader("User-Agent", userAgent);
@@ -45,11 +45,11 @@ public class HttpUtil {
 
     public static String get(String url) {
         try {
-            return tryGet(url);
+            return tryGetOnce(url);
         } catch (Exception e) {
             System.err.println("http get error: " + e.getMessage() + ", retry " + url);
             try {
-                return tryGet(url);
+                return tryGetOnce(url);
             } catch (IOException ex) {
                 ex.printStackTrace();
             }
@@ -63,7 +63,7 @@ public class HttpUtil {
      * @param url
      * @return
      */
-    public static String post(String url, Map<String, String> param) {
+    public static String tryPostOnce(String url, Map<String, String> param) {
         System.out.println("HttpClient POST: " + url);
         CloseableHttpClient client = HttpClients.createDefault();
         HttpPost httpPost = new HttpPost(url);

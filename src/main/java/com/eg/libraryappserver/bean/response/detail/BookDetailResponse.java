@@ -1,31 +1,21 @@
-package com.eg.libraryappserver.book.bean.library;
+package com.eg.libraryappserver.bean.response.detail;
 
 import lombok.Data;
-import org.springframework.data.annotation.Id;
-import org.springframework.data.mongodb.core.mapping.Document;
 
-import java.util.Date;
 import java.util.List;
 
 /**
- * 一种书
+ * 返回给客户端的，书的详情页的数据
  *
- * @author Administrator
+ * @time 2020-04-18 19:24
  */
 @Data
-@Document
-public class Book {
-    @Id
-    private String _id;
-
+public class BookDetailResponse {
+    private String mangoId;
     //一次图书馆爬虫所拿到的：
     private String isbn;            //isbn从图书馆网站爬下来，带横杠
-    private String callno;          //索书号，例如：K837.127/57
+    private String callno;          //索书号
     private String bookrecno;       //书的id，例如：127796
-    private Date createTime;        //创建时间
-    private CoverImage coverImage;
-
-    private List<Holding> holdingList;
 
     //豆瓣api拿到的：
     private String isbn13;          //没有横杠，纯数字
@@ -40,6 +30,4 @@ public class Book {
     private String pages;           //页码数
     private String catalog;         //目录
     private String summary;         //简述
-    private String doubanBookInfoJson;//豆瓣查到的信息
-
 }

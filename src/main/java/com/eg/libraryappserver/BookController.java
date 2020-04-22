@@ -1,10 +1,10 @@
-package com.eg.libraryappserver.book;
+package com.eg.libraryappserver;
 
 import com.alibaba.fastjson.JSON;
-import com.eg.libraryappserver.book.bean.library.Book;
-import com.eg.libraryappserver.book.bean.response.detail.BookDetailResponse;
-import com.eg.libraryappserver.book.bean.response.query.BookQueryRecord;
-import com.eg.libraryappserver.book.bean.response.query.BookQueryResponse;
+import com.eg.libraryappserver.bean.book.Book;
+import com.eg.libraryappserver.bean.response.detail.BookDetailResponse;
+import com.eg.libraryappserver.bean.response.query.BookQueryRecord;
+import com.eg.libraryappserver.bean.response.query.BookQueryResponse;
 import org.apache.commons.beanutils.BeanUtils;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.data.domain.PageRequest;

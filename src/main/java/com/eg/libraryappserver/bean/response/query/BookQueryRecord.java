@@ -1,4 +1,4 @@
-package com.eg.libraryappserver.book.bean.response.query;
+package com.eg.libraryappserver.bean.response.query;
 
 import lombok.Data;
 

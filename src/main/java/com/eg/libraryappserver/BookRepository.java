@@ -1,6 +1,6 @@
-package com.eg.libraryappserver.book;
+package com.eg.libraryappserver;
 
-import com.eg.libraryappserver.book.bean.library.Book;
+import com.eg.libraryappserver.bean.book.Book;
 import org.springframework.data.domain.PageRequest;
 import org.springframework.data.mongodb.repository.MongoRepository;
 
