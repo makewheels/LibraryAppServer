@@ -260,18 +260,40 @@ public class CrawlBookList {
         String json = HttpUtil.get(holdingListUrl_1 + bookrecno + holdingListUrl_2);
         JSONObject jsonObject = JSONObject.parseObject(json);
         //holdingList
-        List<Holding> holdingList = JSON.parseArray(JSON.toJSONString(jsonObject.get("holdingList")), Holding.class);
+        List<Holding> holdingList = JSON.parseArray(JSON.toJSONString(jsonObject.get("holdingList")),
+                Holding.class);
         //保存到数据库
         if (saveSwitch)
             for (Holding holding : holdingList) {
-                holding.setCreateTime(new Date());
                 holding.setBookId(bookId);
-                holdingRepository.save(holding);
+                String barcode = holding.getBarcode();
+                //看这条holding是不是已经存在了
+                Holding findHolding = holdingRepository.findHoldingByBarcode(barcode);
+                //如果不存在，则保存
+                if (findHolding == null) {
+                    holding.setCreateTime(new Date());
+                    holdingRepository.save(holding);
+                } else if (findHolding.getBarcode().equals(holding.getBarcode())
+                        && findHolding.getRecno() == holding.getRecno()
+                        && findHolding.getBookrecno() == holding.getBookrecno()) {
+                    //如果已经存在，则更新
+                    holding.set_id(findHolding.get_id());
+                    holding.setBookId(findHolding.getBookId());
+                    holding.setUpdateTime(new Date());
+                    holding.setCreateTime(findHolding.getCreateTime());
+                    try {
+                        BeanUtils.copyProperties(findHolding, holding);
+                    } catch (IllegalAccessException | InvocationTargetException e) {
+                        e.printStackTrace();
+                    }
+                    holdingRepository.save(findHolding);
+                }
             }
         //统计借阅数，续借数
         int borrowCount = 0;
         int renewCount = 0;
-        for (Holding holding : holdingList) {
+        for (
+                Holding holding : holdingList) {
             borrowCount += holding.getTotalLoanNum();
             renewCount += holding.getTotalRenewNum();
         }
@@ -281,7 +303,8 @@ public class CrawlBookList {
         Map jsonLoanWorkMap = jsonObject.getJSONObject("loanWorkMap");
         Set set = jsonLoanWorkMap.keySet();
         Map<String, BorrowRecord> loanWorkMap = new HashMap<>();
-        for (Object key : set) {
+        for (
+                Object key : set) {
             BorrowRecord borrowRecord = JSON.parseObject(JSON.toJSONString(jsonLoanWorkMap.get(key)), BorrowRecord.class);
             loanWorkMap.put((String) key, borrowRecord);
         }
@@ -295,9 +318,10 @@ public class CrawlBookList {
                 //要保存借阅记录之前，先看数据库中有没有
                 String barcode = borrowRecord.getBarcode();
                 List<BorrowRecord> findBorrowRecords = borrowRecordRepository.findBorrowRecordsByBarcode(barcode);
-                //如果没有则保存。如果已经有了则跳过
-                boolean isExist = false;
-                if (CollectionUtils.isNotEmpty(findBorrowRecords)) {
+                //如果没有则保存，如果已有则跳过
+                if (CollectionUtils.isEmpty(findBorrowRecords)) {
+                    borrowRecordRepository.save(borrowRecord);
+                } else {
                     for (BorrowRecord findBorrowRecord : findBorrowRecords) {
                         if (borrowRecord.getRdid().equals(findBorrowRecord.getRdid())
                                 && borrowRecord.getLoanDate() == findBorrowRecord.getLoanDate()
@@ -306,13 +330,13 @@ public class CrawlBookList {
                                 && borrowRecord.getBarcode().equals(findBorrowRecord.getBarcode())
                                 && borrowRecord.getRuleState() == findBorrowRecord.getRuleState()
                                 && borrowRecord.getLoanCount() == findBorrowRecord.getLoanCount()
-                                && borrowRecord.getAttachMent() == findBorrowRecord.getAttachMent()) {
-                            BeanUtils.c
+                                && borrowRecord.getAttachMent() == findBorrowRecord.getAttachMent()
+                                && borrowRecord.isUnderlease() == findBorrowRecord.isUnderlease()) {
+                            //发现已经有这条数据了，则跳过
+                            break;
                         }
                     }
                 }
-                if (CollectionUtils.isEmpty(findBorrowRecords))
-                    borrowRecordRepository.save(borrowRecord);
             }
         }
     }
@@ -403,7 +427,8 @@ public class CrawlBookList {
             progress.setCreateTime(new Date());
             progress.setKey(PROGRESS_KEY);
             progress.setPage(0);
-            progressRepository.save(progress);
+            if (saveSwitch)
+                progressRepository.save(progress);
         } else {
             page = progress.getPage() + 1;
         }
@@ -447,8 +472,10 @@ public class CrawlBookList {
                         + " " + book.getBookId());
             }
             //一页完成，保存进度
-            progress.setPage(page);
-            progressRepository.save(progress);
+            if (saveSwitch) {
+                progress.setPage(page);
+                progressRepository.save(progress);
+            }
             //继续下一页
             page++;
             //刷新url
@@ -456,7 +483,7 @@ public class CrawlBookList {
             bookList = parseHtmlToBookList(url);
             System.out.println("page = " + page);
         }
-        //整个都完事了，进度page重置为0
+        //整个都完事了，page页码进度重置为0
         progress.setPage(0);
         if (saveSwitch)
             progressRepository.save(progress);

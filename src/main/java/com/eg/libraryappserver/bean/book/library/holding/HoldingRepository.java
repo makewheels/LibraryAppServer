@@ -8,4 +8,5 @@ import org.springframework.stereotype.Repository;
  */
 @Repository
 public interface HoldingRepository extends MongoRepository<Holding, String> {
+    Holding findHoldingByBarcode(String barcode);
 }
