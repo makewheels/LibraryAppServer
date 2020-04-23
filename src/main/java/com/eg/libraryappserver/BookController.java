@@ -16,8 +16,6 @@ import org.apache.commons.codec.digest.DigestUtils;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.data.domain.PageRequest;
 import org.springframework.data.mongodb.core.MongoTemplate;
-import org.springframework.data.mongodb.core.query.Criteria;
-import org.springframework.data.mongodb.core.query.Query;
 import org.springframework.stereotype.Controller;
 import org.springframework.web.bind.annotation.PostMapping;
 import org.springframework.web.bind.annotation.RequestMapping;
@@ -36,9 +34,15 @@ import java.util.List;
 @RequestMapping("/book")
 @ResponseBody
 public class BookController {
+    private BookService bookService;
     private BookRepository bookRepository;
     private HoldingRepository holdingRepository;
     private MongoTemplate mongoTemplate;
+
+    @Autowired
+    public void setBookService(BookService bookService) {
+        this.bookService = bookService;
+    }
 
     @Autowired
     public void setMongoTemplate(MongoTemplate mongoTemplate) {
@@ -50,6 +54,7 @@ public class BookController {
         this.bookRepository = bookRepository;
     }
 
+    @Autowired
     public void setHoldingRepository(HoldingRepository holdingRepository) {
         this.holdingRepository = holdingRepository;
     }
@@ -64,25 +69,26 @@ public class BookController {
     public String requestPositionMission(@RequestParam String password) {
         if (password == null || !password.equals("ETwrayANWeniq6HY"))
             return null;
-        Query query = Query.query(Criteria.where("fromLibrary.holdingList").ne("[]"));
-        query.limit(10);
-        List<Book> books = mongoTemplate.find(query, Book.class);
-        List<BookPosition> responseList = new ArrayList<>();
-        for (Book book : books) {
-            BookPosition bookPosition = new BookPosition();
-            bookPosition.setBookId(book.getBookId());
-            List<BarcodePosition> barcodePositionList = new ArrayList<>();
-            List<Holding> holdingList = null;
-//            book.getFromLibrary().getHoldingList();
-            for (Holding holding : holdingList) {
-                BarcodePosition barcodePosition = new BarcodePosition();
-                barcodePosition.setBarcode(holding.getBarcode());
-                barcodePositionList.add(barcodePosition);
-            }
-            bookPosition.setBarcodePositionList(barcodePositionList);
-            responseList.add(bookPosition);
-        }
-        return JSON.toJSONString(responseList);
+//        bookService.getPositionMissionHoldings(10)
+//        holdingRepository.findHoldingByBarcode()
+//        List<BookPosition> responseList = new ArrayList<>();
+//        for (Book book : books) {
+//            BookPosition bookPosition = new BookPosition();
+//            bookPosition.setBookId(book.getBookId());
+//            //从数据库中查
+//            List<BarcodePosition> barcodePositionList = new ArrayList<>();
+//            List<Holding> holdingList = null;
+////            book.getFromLibrary().getHoldingList();
+//            for (Holding holding : holdingList) {
+//                BarcodePosition barcodePosition = new BarcodePosition();
+//                barcodePosition.setBarcode(holding.getBarcode());
+//                barcodePositionList.add(barcodePosition);
+//            }
+//            bookPosition.setBarcodePositionList(barcodePositionList);
+//            responseList.add(bookPosition);
+//        }
+//        return JSON.toJSONString(responseList);
+        return null;
     }
 
     /**

@@ -1,5 +1,6 @@
 package com.eg.libraryappserver.bean.book.library.holding;
 
+import com.eg.libraryappserver.autoincrease.AutoIncrement;
 import lombok.Data;
 import org.springframework.data.annotation.Id;
 import org.springframework.data.mongodb.core.mapping.Document;
@@ -16,6 +17,8 @@ import java.util.Date;
 public class BorrowRecord {
     @Id
     private String _id;
+    @AutoIncrement
+    private long index;
 
     private String bookId;
     private Date createTime;

@@ -489,5 +489,4 @@ public class CrawlBookList {
             progressRepository.save(progress);
         System.out.println("CollectionUtils.isNotEmpty(bookList) null the end!");
     }
-
 }

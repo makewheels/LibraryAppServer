@@ -1,5 +1,6 @@
 package com.eg.libraryappserver.bean.book;
 
+import com.eg.libraryappserver.autoincrease.AutoIncrement;
 import com.eg.libraryappserver.bean.book.douban.FromDouban;
 import com.eg.libraryappserver.bean.book.library.FromLibrary;
 import lombok.Data;
@@ -18,6 +19,8 @@ import java.util.Date;
 public class Book {
     @Id
     private String _id;
+    @AutoIncrement
+    private long index;
 
     private String bookId;
     private Date createTime;
