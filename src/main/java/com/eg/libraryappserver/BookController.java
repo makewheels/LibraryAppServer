@@ -3,19 +3,19 @@ package com.eg.libraryappserver;
 import com.alibaba.fastjson.JSON;
 import com.eg.libraryappserver.bean.book.Book;
 import com.eg.libraryappserver.bean.book.BookRepository;
+import com.eg.libraryappserver.bean.book.library.holding.BarcodePosition;
 import com.eg.libraryappserver.bean.book.library.holding.Holding;
-import com.eg.libraryappserver.bean.book.library.holding.HoldingRepository;
 import com.eg.libraryappserver.bean.book.library.holding.Position;
-import com.eg.libraryappserver.bean.book.library.holding.positionmission.BarcodePosition;
-import com.eg.libraryappserver.bean.book.library.holding.positionmission.BookPosition;
+import com.eg.libraryappserver.bean.book.library.holding.repository.HoldingRepository;
 import com.eg.libraryappserver.bean.response.detail.BookDetailResponse;
 import com.eg.libraryappserver.bean.response.query.BookQueryRecord;
 import com.eg.libraryappserver.bean.response.query.BookQueryResponse;
+import com.eg.libraryappserver.crawl.booklist.KeyValue;
+import com.eg.libraryappserver.crawl.booklist.KeyValueRepository;
 import org.apache.commons.beanutils.BeanUtils;
 import org.apache.commons.codec.digest.DigestUtils;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.data.domain.PageRequest;
-import org.springframework.data.mongodb.core.MongoTemplate;
 import org.springframework.stereotype.Controller;
 import org.springframework.web.bind.annotation.PostMapping;
 import org.springframework.web.bind.annotation.RequestMapping;
@@ -37,16 +37,11 @@ public class BookController {
     private BookService bookService;
     private BookRepository bookRepository;
     private HoldingRepository holdingRepository;
-    private MongoTemplate mongoTemplate;
+    private KeyValueRepository keyValueRepository;
 
     @Autowired
     public void setBookService(BookService bookService) {
         this.bookService = bookService;
-    }
-
-    @Autowired
-    public void setMongoTemplate(MongoTemplate mongoTemplate) {
-        this.mongoTemplate = mongoTemplate;
     }
 
     @Autowired
@@ -59,6 +54,11 @@ public class BookController {
         this.holdingRepository = holdingRepository;
     }
 
+    @Autowired
+    public void setKeyValueRepository(KeyValueRepository keyValueRepository) {
+        this.keyValueRepository = keyValueRepository;
+    }
+
     /**
      * 请求书的位置任务
      *
@@ -69,26 +69,15 @@ public class BookController {
     public String requestPositionMission(@RequestParam String password) {
         if (password == null || !password.equals("ETwrayANWeniq6HY"))
             return null;
-//        bookService.getPositionMissionHoldings(10)
-//        holdingRepository.findHoldingByBarcode()
-//        List<BookPosition> responseList = new ArrayList<>();
-//        for (Book book : books) {
-//            BookPosition bookPosition = new BookPosition();
-//            bookPosition.setBookId(book.getBookId());
-//            //从数据库中查
-//            List<BarcodePosition> barcodePositionList = new ArrayList<>();
-//            List<Holding> holdingList = null;
-////            book.getFromLibrary().getHoldingList();
-//            for (Holding holding : holdingList) {
-//                BarcodePosition barcodePosition = new BarcodePosition();
-//                barcodePosition.setBarcode(holding.getBarcode());
-//                barcodePositionList.add(barcodePosition);
-//            }
-//            bookPosition.setBarcodePositionList(barcodePositionList);
-//            responseList.add(bookPosition);
-//        }
-//        return JSON.toJSONString(responseList);
-        return null;
+        //从数据库中查
+        List<Holding> holdingList = bookService.getPositionMissionHoldings(10);
+        List<BarcodePosition> barcodePositionList = new ArrayList<>();
+        for (Holding holding : holdingList) {
+            BarcodePosition barcodePosition = new BarcodePosition();
+            barcodePosition.setBarcode(holding.getBarcode());
+            barcodePositionList.add(barcodePosition);
+        }
+        return JSON.toJSONString(barcodePositionList);
     }
 
     /**
@@ -99,40 +88,45 @@ public class BookController {
      */
     @PostMapping("/submitPositionMission")
     public String submitPositionMission(@RequestParam String provider,
-                                        @RequestParam String bookPositionJson) {
-        BookPosition bookPosition = JSON.parseObject(bookPositionJson, BookPosition.class);
-        List<BarcodePosition> barcodePositionList = bookPosition.getBarcodePositionList();
+                                        @RequestParam String barcodePositionJson) {
+        List<BarcodePosition> barcodePositionList = JSON.parseArray(barcodePositionJson, BarcodePosition.class);
+        //签名校验
+        String signKey = "vPUYt6q1AzmmjzXG";
         for (BarcodePosition barcodePosition : barcodePositionList) {
             String barcode = barcodePosition.getBarcode();
             String position = barcodePosition.getPosition();
+            //时间大于十分钟则放弃
             long timestamp = barcodePosition.getTimestamp();
+            long tenMinutes = 1000 * 60 * 10;
+            long diffTime = System.currentTimeMillis() - timestamp;
+            if (diffTime > tenMinutes)
+                return null;
             String clientSign = barcodePosition.getSign();
-            String serverSign = DigestUtils.md5Hex(barcode + position + timestamp + "vPUYt6q1AzmmjzXG");
+            String serverSign = DigestUtils.md5Hex(barcode + position + timestamp + signKey);
             if (!clientSign.equals(serverSign))
                 return null;
         }
-        String bookId = bookPosition.getBookId();
-        Book book = bookRepository.findBookByBookId(bookId);
-        List<Holding> holdingList = null;
-//                book.getFromLibrary().getHoldingList();
-        for (Holding holding : holdingList) {
-            String barcode = holding.getBarcode();
-            BarcodePosition barcodePosition = null;
-            for (BarcodePosition each : barcodePositionList) {
-                if (barcode.equals(each.getBarcode()))
-                    barcodePosition = each;
+        //保存位置数据
+        for (BarcodePosition barcodePosition : barcodePositionList) {
+            String barcode = barcodePosition.getBarcode();
+            Holding holding = holdingRepository.findHoldingByBarcode(barcode);
+            Position position = holding.getPosition();
+            if (position == null) {
+                position = new Position();
+                position.setCreateTime(new Date());
+                holding.setPosition(position);
+            } else {
+                position.setUpdateTime(new Date());
             }
-            Position position = new Position();
-            position.setCreateTime(new Date());
             position.setPosition(barcodePosition.getPosition());
-            position.setRoomName("");
-            System.out.println();
-            System.out.println("position = " + position);
-            System.out.println("BookController.submitPositionMission");
+            //todo
 
-            holding.setPosition(position);
+            //更新进度
+            long holdingIndex = holding.getIndex();
+            KeyValue progress = bookService.getPositionMissionProgress();
+            progress.setValue(holdingIndex);
+            keyValueRepository.save(progress);
         }
-        bookRepository.save(book);
         return "ok";
     }
 

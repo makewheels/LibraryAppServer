@@ -1,4 +1,4 @@
-package com.eg.libraryappserver.bean.book.library.holding.positionmission;
+package com.eg.libraryappserver.bean.book.library.holding;
 
 import lombok.Data;
 

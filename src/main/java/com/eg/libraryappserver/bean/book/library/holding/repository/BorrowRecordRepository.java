@@ -1,5 +1,6 @@
-package com.eg.libraryappserver.bean.book.library.holding;
+package com.eg.libraryappserver.bean.book.library.holding.repository;
 
+import com.eg.libraryappserver.bean.book.library.holding.BorrowRecord;
 import org.springframework.data.mongodb.repository.MongoRepository;
 import org.springframework.stereotype.Repository;
 
