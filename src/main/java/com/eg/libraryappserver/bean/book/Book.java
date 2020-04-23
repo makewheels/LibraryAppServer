@@ -20,7 +20,8 @@ public class Book {
     private String _id;
 
     private String bookId;
-    private Date createTime;        //创建时间
+    private Date createTime;
+    private Date updateTime;
 
     private FromLibrary fromLibrary;
     private FromDouban fromDouban;

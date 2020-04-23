@@ -1,12 +1,21 @@
 package com.eg.libraryappserver.bean.book.library.holding;
 
 import lombok.Data;
+import org.springframework.data.annotation.Id;
+import org.springframework.data.mongodb.core.mapping.Document;
 
 import java.util.Date;
 
 @Data
+@Document
 public class Holding {
-    private Position position;//位置
+    @Id
+    private String _id;
+
+    private String bookId;
+    private Position position;
+    private Date createTime;
+    private Date updateTime;
 
     private long recno;
     private long bookrecno;

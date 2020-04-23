@@ -1,9 +1,6 @@
 package com.eg.libraryappserver.bean.book.library;
 
-import com.eg.libraryappserver.bean.book.library.holding.Holding;
 import lombok.Data;
-
-import java.util.List;
 
 /**
  * 爬虫获取的，来自图书馆的数据
@@ -22,8 +19,6 @@ public class FromLibrary {
     private String publishDate;
     private String type;
     private String callno;
-    //barcode数据
-    private List<Holding> holdingList;
     private int borrowCount;
     private int renewCount;
 }

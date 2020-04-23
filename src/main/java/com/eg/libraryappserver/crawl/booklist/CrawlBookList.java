@@ -7,11 +7,13 @@ import com.eg.libraryappserver.bean.book.Book;
 import com.eg.libraryappserver.bean.book.douban.FromDouban;
 import com.eg.libraryappserver.bean.book.library.FromLibrary;
 import com.eg.libraryappserver.bean.book.library.holding.BorrowRecordRepository;
+import com.eg.libraryappserver.bean.book.library.holding.HoldingRepository;
 import com.eg.libraryappserver.bean.book.library.imageapi.LibraryImageApiResult;
 import com.eg.libraryappserver.bean.book.library.imageapi.Result;
 import com.eg.libraryappserver.bean.book.library.holding.BorrowRecord;
 import com.eg.libraryappserver.bean.book.library.holding.Holding;
 import com.eg.libraryappserver.util.*;
+import org.apache.commons.beanutils.BeanUtils;
 import org.apache.commons.collections4.CollectionUtils;
 import org.apache.commons.lang3.RandomStringUtils;
 import org.apache.commons.lang3.StringUtils;
@@ -25,6 +27,7 @@ import org.springframework.test.context.junit4.SpringRunner;
 import us.codecraft.xsoup.Xsoup;
 
 import java.io.UnsupportedEncodingException;
+import java.lang.reflect.InvocationTargetException;
 import java.net.URLEncoder;
 import java.util.*;
 
@@ -42,20 +45,33 @@ import java.util.*;
 @RunWith(SpringRunner.class)
 @SpringBootTest()
 public class CrawlBookList {
+    private String PROGRESS_KEY = "CrawlBookList";
     //是否保存到数据库开关
     private boolean saveSwitch = true;
+
     private BookRepository bookRepository;
+    private BorrowRecordRepository borrowRecordRepository;
+    private HoldingRepository holdingRepository;
+    private ProgressRepository progressRepository;
 
     @Autowired
     public void setBookRepository(BookRepository bookRepository) {
         this.bookRepository = bookRepository;
     }
 
-    private BorrowRecordRepository borrowRecordRepository;
-
     @Autowired
     public void setBorrowRecordRepository(BorrowRecordRepository borrowRecordRepository) {
         this.borrowRecordRepository = borrowRecordRepository;
+    }
+
+    @Autowired
+    public void setHoldingRepository(HoldingRepository holdingRepository) {
+        this.holdingRepository = holdingRepository;
+    }
+
+    @Autowired
+    public void setProgressRepository(ProgressRepository progressRepository) {
+        this.progressRepository = progressRepository;
     }
 
     //每页几个
@@ -245,7 +261,13 @@ public class CrawlBookList {
         JSONObject jsonObject = JSONObject.parseObject(json);
         //holdingList
         List<Holding> holdingList = JSON.parseArray(JSON.toJSONString(jsonObject.get("holdingList")), Holding.class);
-        fromLibrary.setHoldingList(holdingList);
+        //保存到数据库
+        if (saveSwitch)
+            for (Holding holding : holdingList) {
+                holding.setCreateTime(new Date());
+                holding.setBookId(bookId);
+                holdingRepository.save(holding);
+            }
         //统计借阅数，续借数
         int borrowCount = 0;
         int renewCount = 0;
@@ -263,14 +285,35 @@ public class CrawlBookList {
             BorrowRecord borrowRecord = JSON.parseObject(JSON.toJSONString(jsonLoanWorkMap.get(key)), BorrowRecord.class);
             loanWorkMap.put((String) key, borrowRecord);
         }
-        //loanWorkMap已就绪
+        //loanWorkMap已准备就绪
         Set<String> keySet = loanWorkMap.keySet();
         for (String key : keySet) {
             BorrowRecord borrowRecord = loanWorkMap.get(key);
             borrowRecord.setBookId(bookId);
             borrowRecord.setCreateTime(new Date());
-            if (saveSwitch)
-                borrowRecordRepository.save(borrowRecord);
+            if (saveSwitch) {
+                //要保存借阅记录之前，先看数据库中有没有
+                String barcode = borrowRecord.getBarcode();
+                List<BorrowRecord> findBorrowRecords = borrowRecordRepository.findBorrowRecordsByBarcode(barcode);
+                //如果没有则保存。如果已经有了则跳过
+                boolean isExist = false;
+                if (CollectionUtils.isNotEmpty(findBorrowRecords)) {
+                    for (BorrowRecord findBorrowRecord : findBorrowRecords) {
+                        if (borrowRecord.getRdid().equals(findBorrowRecord.getRdid())
+                                && borrowRecord.getLoanDate() == findBorrowRecord.getLoanDate()
+                                && borrowRecord.getReturnDate() == findBorrowRecord.getReturnDate()
+                                && borrowRecord.getDueTime() == findBorrowRecord.getDueTime()
+                                && borrowRecord.getBarcode().equals(findBorrowRecord.getBarcode())
+                                && borrowRecord.getRuleState() == findBorrowRecord.getRuleState()
+                                && borrowRecord.getLoanCount() == findBorrowRecord.getLoanCount()
+                                && borrowRecord.getAttachMent() == findBorrowRecord.getAttachMent()) {
+                            BeanUtils.c
+                        }
+                    }
+                }
+                if (CollectionUtils.isEmpty(findBorrowRecords))
+                    borrowRecordRepository.save(borrowRecord);
+            }
         }
     }
 
@@ -339,7 +382,7 @@ public class CrawlBookList {
         else
             libraryImage = resourceLink;
         //如果没有豆瓣图片，或者是default，则用图书馆图片
-        if (StringUtils.isNotEmpty(doubanImage) && doubanImage.contains("default") == false)
+        if (StringUtils.isNotEmpty(doubanImage) && !doubanImage.contains("default"))
             resultImage = doubanImage;
         else
             resultImage = libraryImage;
@@ -353,6 +396,17 @@ public class CrawlBookList {
     public void run() {
         //页码
         int page = 1;
+        //读取之前的爬虫进度
+        Progress progress = progressRepository.findProgressByKey(PROGRESS_KEY);
+        if (progress == null) {
+            progress = new Progress();
+            progress.setCreateTime(new Date());
+            progress.setKey(PROGRESS_KEY);
+            progress.setPage(0);
+            progressRepository.save(progress);
+        } else {
+            page = progress.getPage() + 1;
+        }
         String url = baseUrl + "&page=" + page;
         //向图书馆服务器发各种请求解析出bookList
         List<Book> bookList = parseHtmlToBookList(url);
@@ -360,23 +414,41 @@ public class CrawlBookList {
         while (CollectionUtils.isNotEmpty(bookList)) {
             //遍历书的列表
             for (Book book : bookList) {
-                //以bookrecno作为id区分，如果数据库已经有了就跳过
-                List<Book> findBooksByBookrecno = bookRepository.findBooksByBookrecno(book.getBookrecno());
-                if (CollectionUtils.isNotEmpty(findBooksByBookrecno)) {
-                    System.out.println("数据库已有这本书，isbn = " + book.getFromLibrary().getIsbn());
-                    continue;
-                }
                 //处理豆瓣api：
                 handleDouban(book);
                 //处理holdingApi
                 handleHoldingApi(book);
                 //整合数据资源
                 integrateDataResources(book);
-                //保存到数据库
-                if (saveSwitch)
-                    bookRepository.save(book);
-                System.out.println(book.getBookId() + " " + book.getFromLibrary().getTitle());
+                //保存book到数据库
+                if (saveSwitch) {
+                    //以bookrecno作为id区分，看数据库中是否已经有这本书了
+                    String bookrecno = book.getFromLibrary().getBookrecno();
+                    Book findBook = bookRepository.findBookByBookrecno(bookrecno);
+                    //如果没有这本书，则保存
+                    if (findBook == null) {
+                        bookRepository.save(book);
+                    } else {
+                        //已经有了则更新
+                        System.out.println("数据库已有这本书，则更新，bookrecno = " + bookrecno);
+                        book.set_id(findBook.get_id());
+                        book.setBookId(findBook.getBookId());
+                        book.setUpdateTime(new Date());
+                        book.setCreateTime(findBook.getCreateTime());
+                        try {
+                            BeanUtils.copyProperties(findBook, book);
+                        } catch (IllegalAccessException | InvocationTargetException e) {
+                            e.printStackTrace();
+                        }
+                        bookRepository.save(findBook);
+                    }
+                }
+                System.out.println("save to database: " + book.getFromLibrary().getTitle()
+                        + " " + book.getBookId());
             }
+            //一页完成，保存进度
+            progress.setPage(page);
+            progressRepository.save(progress);
             //继续下一页
             page++;
             //刷新url
@@ -384,6 +456,10 @@ public class CrawlBookList {
             bookList = parseHtmlToBookList(url);
             System.out.println("page = " + page);
         }
+        //整个都完事了，进度page重置为0
+        progress.setPage(0);
+        if (saveSwitch)
+            progressRepository.save(progress);
         System.out.println("CollectionUtils.isNotEmpty(bookList) null the end!");
     }
 

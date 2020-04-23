@@ -19,4 +19,5 @@ public class Position {
     private int level;      //层
     private int pai;        //排
     private Date createTime;
+    private Date updateTime;
 }

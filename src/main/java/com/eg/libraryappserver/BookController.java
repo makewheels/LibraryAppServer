@@ -4,6 +4,7 @@ import com.alibaba.fastjson.JSON;
 import com.eg.libraryappserver.bean.book.Book;
 import com.eg.libraryappserver.bean.book.BookRepository;
 import com.eg.libraryappserver.bean.book.library.holding.Holding;
+import com.eg.libraryappserver.bean.book.library.holding.HoldingRepository;
 import com.eg.libraryappserver.bean.book.library.holding.Position;
 import com.eg.libraryappserver.bean.book.library.holding.positionmission.BarcodePosition;
 import com.eg.libraryappserver.bean.book.library.holding.positionmission.BookPosition;
@@ -36,17 +37,21 @@ import java.util.List;
 @ResponseBody
 public class BookController {
     private BookRepository bookRepository;
+    private HoldingRepository holdingRepository;
+    private MongoTemplate mongoTemplate;
+
+    @Autowired
+    public void setMongoTemplate(MongoTemplate mongoTemplate) {
+        this.mongoTemplate = mongoTemplate;
+    }
 
     @Autowired
     public void setBookRepository(BookRepository bookRepository) {
         this.bookRepository = bookRepository;
     }
 
-    private MongoTemplate mongoTemplate;
-
-    @Autowired
-    public void setMongoTemplate(MongoTemplate mongoTemplate) {
-        this.mongoTemplate = mongoTemplate;
+    public void setHoldingRepository(HoldingRepository holdingRepository) {
+        this.holdingRepository = holdingRepository;
     }
 
     /**
@@ -67,7 +72,8 @@ public class BookController {
             BookPosition bookPosition = new BookPosition();
             bookPosition.setBookId(book.getBookId());
             List<BarcodePosition> barcodePositionList = new ArrayList<>();
-            List<Holding> holdingList = book.getFromLibrary().getHoldingList();
+            List<Holding> holdingList = null;
+//            book.getFromLibrary().getHoldingList();
             for (Holding holding : holdingList) {
                 BarcodePosition barcodePosition = new BarcodePosition();
                 barcodePosition.setBarcode(holding.getBarcode());
@@ -101,7 +107,8 @@ public class BookController {
         }
         String bookId = bookPosition.getBookId();
         Book book = bookRepository.findBookByBookId(bookId);
-        List<Holding> holdingList = book.getFromLibrary().getHoldingList();
+        List<Holding> holdingList = null;
+//                book.getFromLibrary().getHoldingList();
         for (Holding holding : holdingList) {
             String barcode = holding.getBarcode();
             BarcodePosition barcodePosition = null;
@@ -113,6 +120,10 @@ public class BookController {
             position.setCreateTime(new Date());
             position.setPosition(barcodePosition.getPosition());
             position.setRoomName("");
+            System.out.println();
+            System.out.println("position = " + position);
+            System.out.println("BookController.submitPositionMission");
+
             holding.setPosition(position);
         }
         bookRepository.save(book);
@@ -181,6 +192,5 @@ public class BookController {
         bookDetailResponse.setMangoId(book.get_id());
         return JSON.toJSONString(bookDetailResponse);
     }
-
 
 }
