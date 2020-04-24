@@ -467,9 +467,9 @@ public class CrawlBookList {
                         }
                         bookRepository.save(findBook);
                     }
+                    System.out.println("save to database: " + book.getFromLibrary().getTitle()
+                            + " " + book.getBookId());
                 }
-                System.out.println("save to database: " + book.getFromLibrary().getTitle()
-                        + " " + book.getBookId());
             }
             //一页完成，保存进度
             if (saveSwitch) {
