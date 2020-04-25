@@ -9,6 +9,7 @@ import org.apache.http.client.methods.CloseableHttpResponse;
 import org.apache.http.client.methods.HttpGet;
 import org.apache.http.client.methods.HttpPost;
 import org.apache.http.impl.client.CloseableHttpClient;
+import org.apache.http.impl.client.HttpClientBuilder;
 import org.apache.http.impl.client.HttpClients;
 import org.apache.http.message.BasicNameValuePair;
 import org.apache.http.util.EntityUtils;
@@ -59,18 +60,31 @@ public class HttpUtil {
         return null;
     }
 
-    public static String tryGetOnce(String url) throws IOException {
+    private static String tryGetOnce(String url) throws IOException {
         System.out.println(Thread.currentThread().getName() + " HttpClient GET: " + url);
-        CloseableHttpClient client = HttpClients.createDefault();
-        HttpGet httpGet = new HttpGet();
-        httpGet.addHeader("User-Agent", userAgent);
-        httpGet.setHeader("Content-type", contentType);
-        httpGet.setHeader("Connection", "keep-alive");
         RequestConfig requestConfig = RequestConfig.custom()
                 .setConnectTimeout(20000)
                 .setConnectionRequestTimeout(20000)
                 .setSocketTimeout(20000)
                 .build();
+        //无限重试client
+        CloseableHttpClient client = HttpClientBuilder.create()
+                .setRetryHandler((exception, executionCount, context) -> {
+                    System.err.println(exception.getMessage());
+                    if (executionCount >= Integer.MAX_VALUE)
+                        return false;
+                    else
+                        return true;
+                })
+                .setDefaultRequestConfig(requestConfig)
+                .build();
+        //原来的普通client
+//        CloseableHttpClient client = HttpClients.createDefault();
+        HttpGet httpGet = new HttpGet();
+        httpGet.addHeader("User-Agent", userAgent);
+        httpGet.setHeader("Content-type", contentType);
+        httpGet.setHeader("Connection", "keep-alive");
+
         httpGet.setConfig(requestConfig);
         httpGet.setURI(URI.create(url));
         CloseableHttpResponse response = client.execute(httpGet);

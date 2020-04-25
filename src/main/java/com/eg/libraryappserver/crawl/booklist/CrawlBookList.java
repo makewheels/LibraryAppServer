@@ -152,7 +152,8 @@ public class CrawlBookList {
             Element bookmeta = bookmetaTD.child(0);
             //图书馆获取图片url的api
             if (StringUtils.isNoneBlank(isbn)) {
-                LibraryImageApiResult libraryImageApi = getLibraryImageApi(isbn.replace("-", ""));
+                LibraryImageApiResult libraryImageApi = getLibraryImageApi(
+                        isbn.replace("-", ""));
                 if (libraryImageApi != null) {
                     List<Result> resultList = libraryImageApi.getResult();
                     if (CollectionUtils.isNotEmpty(resultList)) {
@@ -422,7 +423,7 @@ public class CrawlBookList {
      * @param book
      */
     private void handleData(Book book) {
-        System.out.println(Thread.currentThread().getName() + " handleData");
+        System.out.println(Thread.currentThread().getName() + " handleData---------");
         //处理豆瓣api：
         handleDouban(book);
         //处理holdingApi
