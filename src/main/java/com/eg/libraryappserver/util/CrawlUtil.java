@@ -9,7 +9,7 @@ public class CrawlUtil {
 	 * @param url
 	 * @return
 	 */
-	public static String get(String url) {
+	public static synchronized String get(String url) {
 		if (lastRequestTime != -1) {
 			long diff = System.currentTimeMillis() - lastRequestTime;
 			if (diff <= Constants.WAIT_TIME_MILLIS) {

@@ -2,16 +2,16 @@ package com.eg.libraryappserver.crawl.booklist;
 
 import com.alibaba.fastjson.JSON;
 import com.alibaba.fastjson.JSONObject;
-import com.eg.libraryappserver.bean.book.BookRepository;
 import com.eg.libraryappserver.bean.book.Book;
+import com.eg.libraryappserver.bean.book.BookRepository;
 import com.eg.libraryappserver.bean.book.douban.FromDouban;
 import com.eg.libraryappserver.bean.book.library.FromLibrary;
+import com.eg.libraryappserver.bean.book.library.holding.BorrowRecord;
+import com.eg.libraryappserver.bean.book.library.holding.Holding;
 import com.eg.libraryappserver.bean.book.library.holding.repository.BorrowRecordRepository;
 import com.eg.libraryappserver.bean.book.library.holding.repository.HoldingRepository;
 import com.eg.libraryappserver.bean.book.library.imageapi.LibraryImageApiResult;
 import com.eg.libraryappserver.bean.book.library.imageapi.Result;
-import com.eg.libraryappserver.bean.book.library.holding.BorrowRecord;
-import com.eg.libraryappserver.bean.book.library.holding.Holding;
 import com.eg.libraryappserver.util.*;
 import org.apache.commons.beanutils.BeanUtils;
 import org.apache.commons.collections4.CollectionUtils;
@@ -30,6 +30,8 @@ import java.io.UnsupportedEncodingException;
 import java.lang.reflect.InvocationTargetException;
 import java.net.URLEncoder;
 import java.util.*;
+import java.util.concurrent.ExecutorService;
+import java.util.concurrent.Executors;
 
 /**
  * 爬取书的列表
@@ -47,7 +49,7 @@ import java.util.*;
 public class CrawlBookList {
     private String PROGRESS_KEY = "CrawlBookList";
     //是否保存到数据库开关
-    private boolean saveSwitch = true;
+    private boolean saveSwitch = false;
 
     private BookRepository bookRepository;
     private BorrowRecordRepository borrowRecordRepository;
@@ -75,7 +77,7 @@ public class CrawlBookList {
     }
 
     //每页几个
-    private int rows = 100;
+    private int rows = 20;
     private String baseUrl = "http://60.218.184.234:8091/opac/search?q=*%3A*" +
             "&searchType=standard&isFacet=true&view=simple&sortWay=score&sortOrder=desc" +
             "&searchWay0=marc&logical0=AND&rows=" + rows;
@@ -174,7 +176,8 @@ public class CrawlBookList {
             String title = bookmeta.child(0).child(0).child(0).text().trim();
             String author = bookmeta.child(1).child(0).text().trim();
             String publisher = bookmeta.child(2).child(0).text().trim();
-            String publishDate = StringUtils.substringAfter(bookmeta.child(2).text().trim(), "出版日期: ").trim();
+            String publishDate = StringUtils.substringAfter(bookmeta.child(2).text().trim(),
+                    "出版日期: ").trim();
             //文献类型：图书
             String type = StringUtils.substringBetween(bookmeta.child(3).text(),
                     "文献类型: ", ", 索书号:");
@@ -414,14 +417,66 @@ public class CrawlBookList {
     }
 
     /**
-     * 爬书的列表并保存
+     * 处理book的各路数据
+     *
+     * @param book
      */
-    @Test
-    public void run() {
-        //页码
-        int page = 1;
-        //读取之前的爬虫进度
-        Progress progress = progressRepository.findProgressByKey(PROGRESS_KEY);
+    private void handleData(Book book) {
+        System.out.println(Thread.currentThread().getName() + " handleData");
+        //处理豆瓣api：
+        handleDouban(book);
+        //处理holdingApi
+        handleHoldingApi(book);
+        //整合数据资源
+        integrateDataResources(book);
+    }
+
+    /**
+     * 把准备好数据的bookList保存到数据库
+     *
+     * @param bookList
+     */
+    public void saveBookListToDatabase(List<Book> bookList) {
+        for (Book book : bookList) {
+            //以bookrecno作为id区分，看数据库中是否已经有这本书了
+            String bookrecno = book.getFromLibrary().getBookrecno();
+            Book findBook = bookRepository.findBookByBookrecno(bookrecno);
+            //如果没有这本书，则保存
+            if (findBook == null) {
+                bookRepository.save(book);
+            } else {
+                //已经有了则更新
+                System.out.println("数据库已有这本书，则更新，bookrecno = " + bookrecno);
+                book.set_id(findBook.get_id());
+                book.setBookId(findBook.getBookId());
+                book.setUpdateTime(new Date());
+                book.setCreateTime(findBook.getCreateTime());
+                try {
+                    BeanUtils.copyProperties(findBook, book);
+                } catch (IllegalAccessException | InvocationTargetException e) {
+                    e.printStackTrace();
+                }
+                bookRepository.save(findBook);
+            }
+            System.out.println("save to database: " + book.getFromLibrary().getTitle()
+                    + " " + book.getBookId());
+        }
+    }
+
+    //线程池
+    private ExecutorService executorService = Executors.newFixedThreadPool(Constants.THREAD_AMOUNT);
+    //页码
+    private int page;
+    private Progress progress;
+    //多线程进度
+    private boolean[] progressArray;
+    private List<Book> bookList;
+
+    /**
+     * 加载进度
+     */
+    private void loadProgress() {
+        progress = progressRepository.findProgressByKey(PROGRESS_KEY);
         if (progress == null) {
             progress = new Progress();
             progress.setCreateTime(new Date());
@@ -430,63 +485,107 @@ public class CrawlBookList {
             if (saveSwitch)
                 progressRepository.save(progress);
         } else {
-            page = progress.getPage() + 1;
+            page = progress.getPage();
         }
+    }
+
+    /**
+     * 检查是否一页的任务都完成了
+     */
+    private synchronized boolean checkPageDataFinished() {
+        for (Boolean each : progressArray) {
+            //只要有没完成的就直接返回
+            if (!each)
+                return false;
+        }
+        //全部完成
+        return true;
+    }
+
+    /**
+     * 当一页数据都准备就绪时
+     */
+    private void onPageDataFinished() {
+        //保存到数据库
+        if (saveSwitch) {
+            //保存bookList
+            saveBookListToDatabase(bookList);
+            //保存进度
+            progress.setPage(page);
+            progressRepository.save(progress);
+        }
+        //开始下一页
+        nextPage();
+    }
+
+    /**
+     * 新的一页任务
+     */
+    private void nextPage() {
+        page++;
         String url = baseUrl + "&page=" + page;
+        System.out.println("page = " + page);
         //向图书馆服务器发各种请求解析出bookList
-        List<Book> bookList = parseHtmlToBookList(url);
-        //只要不为空
-        while (CollectionUtils.isNotEmpty(bookList)) {
-            //遍历书的列表
-            for (Book book : bookList) {
-                //处理豆瓣api：
-                handleDouban(book);
-                //处理holdingApi
-                handleHoldingApi(book);
-                //整合数据资源
-                integrateDataResources(book);
-                //保存book到数据库
-                if (saveSwitch) {
-                    //以bookrecno作为id区分，看数据库中是否已经有这本书了
-                    String bookrecno = book.getFromLibrary().getBookrecno();
-                    Book findBook = bookRepository.findBookByBookrecno(bookrecno);
-                    //如果没有这本书，则保存
-                    if (findBook == null) {
-                        bookRepository.save(book);
-                    } else {
-                        //已经有了则更新
-                        System.out.println("数据库已有这本书，则更新，bookrecno = " + bookrecno);
-                        book.set_id(findBook.get_id());
-                        book.setBookId(findBook.getBookId());
-                        book.setUpdateTime(new Date());
-                        book.setCreateTime(findBook.getCreateTime());
-                        try {
-                            BeanUtils.copyProperties(findBook, book);
-                        } catch (IllegalAccessException | InvocationTargetException e) {
-                            e.printStackTrace();
-                        }
-                        bookRepository.save(findBook);
-                    }
-                    System.out.println("save to database: " + book.getFromLibrary().getTitle()
-                            + " " + book.getBookId());
-                }
-            }
-            //一页完成，保存进度
-            if (saveSwitch) {
-                progress.setPage(page);
-                progressRepository.save(progress);
-            }
-            //继续下一页
-            page++;
-            //刷新url
-            url = baseUrl + "&page=" + page;
-            bookList = parseHtmlToBookList(url);
-            System.out.println("page = " + page);
+        bookList = parseHtmlToBookList(url);
+        //如果是空，就全都结束了
+        if (CollectionUtils.isEmpty(bookList)) {
+            onAllFinish();
+            return;
         }
+        //初始化进度list都为false
+        progressArray = new boolean[bookList.size()];
+        for (int i = 0; i < bookList.size(); i++) {
+            progressArray[i] = false;
+        }
+        //遍历书的列表
+        for (int i = 0; i < bookList.size(); i++) {
+            Book book = bookList.get(i);
+            int finalI = i;
+            //提交任务
+            executorService.execute(() -> {
+                //处理数据
+                handleData(book);
+                //处理完成，更新进度
+                progressArray[finalI] = true;
+                //检查是否一页的任务都完成了
+                if (checkPageDataFinished())
+                    onPageDataFinished();
+            });
+        }
+    }
+
+    /**
+     * 整个都结束了
+     */
+    private void onAllFinish() {
         //整个都完事了，page页码进度重置为0
         progress.setPage(0);
+        //保存进度
         if (saveSwitch)
             progressRepository.save(progress);
         System.out.println("CollectionUtils.isNotEmpty(bookList) null the end!");
+        executorService.shutdown();
     }
+
+    /**
+     * 爬书的列表并保存
+     */
+    @Test
+    public void run() {
+        //加载进度
+        loadProgress();
+        //爬虫正式开始
+        nextPage();
+        boolean terminated = executorService.isTerminated();
+        while (!terminated) {
+            terminated = executorService.isTerminated();
+            System.out.println(Thread.currentThread().getName() + " still waiting...");
+            try {
+                Thread.sleep(2000);
+            } catch (InterruptedException e) {
+                e.printStackTrace();
+            }
+        }
+    }
+
 }

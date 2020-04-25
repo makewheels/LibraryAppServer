@@ -30,25 +30,6 @@ public class HttpUtil {
     private static String userAgent = "Mozilla/5.0 (Windows NT 6.1; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/73.0.3683.86 Safari/537.36";
     private static String contentType = "application/x-www-form-urlencoded";
 
-    public static String tryGetOnce(String url) throws IOException {
-        CloseableHttpClient client = HttpClients.createDefault();
-        HttpGet httpGet = new HttpGet();
-        httpGet.addHeader("User-Agent", userAgent);
-        httpGet.setHeader("Content-type", contentType);
-        httpGet.setHeader("Connection", "keep-alive");
-        System.out.println("HttpClient GET: " + url);
-        RequestConfig requestConfig = RequestConfig.custom()
-                .setConnectTimeout(20000)
-                .setConnectionRequestTimeout(20000)
-                .setSocketTimeout(20000)
-                .build();
-        httpGet.setConfig(requestConfig);
-        httpGet.setURI(URI.create(url));
-        CloseableHttpResponse response = client.execute(httpGet);
-        HttpEntity entity = response.getEntity();
-        return EntityUtils.toString(entity, Constants.CHARSET);
-    }
-
     public static String get(String url) {
         try {
             //执行第一次
@@ -76,6 +57,25 @@ public class HttpUtil {
             }
         }
         return null;
+    }
+
+    public static String tryGetOnce(String url) throws IOException {
+        System.out.println(Thread.currentThread().getName() + " HttpClient GET: " + url);
+        CloseableHttpClient client = HttpClients.createDefault();
+        HttpGet httpGet = new HttpGet();
+        httpGet.addHeader("User-Agent", userAgent);
+        httpGet.setHeader("Content-type", contentType);
+        httpGet.setHeader("Connection", "keep-alive");
+        RequestConfig requestConfig = RequestConfig.custom()
+                .setConnectTimeout(20000)
+                .setConnectionRequestTimeout(20000)
+                .setSocketTimeout(20000)
+                .build();
+        httpGet.setConfig(requestConfig);
+        httpGet.setURI(URI.create(url));
+        CloseableHttpResponse response = client.execute(httpGet);
+        HttpEntity entity = response.getEntity();
+        return EntityUtils.toString(entity, Constants.CHARSET);
     }
 
     /**
