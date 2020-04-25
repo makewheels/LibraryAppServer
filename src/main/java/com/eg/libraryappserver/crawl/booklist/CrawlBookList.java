@@ -77,7 +77,7 @@ public class CrawlBookList {
     }
 
     //每页几个
-    private int rows = 20;
+    private final int rows = 100;
     private String baseUrl = "http://60.218.184.234:8091/opac/search?q=*%3A*" +
             "&searchType=standard&isFacet=true&view=simple&sortWay=score&sortOrder=desc" +
             "&searchWay0=marc&logical0=AND&rows=" + rows;
@@ -470,6 +470,7 @@ public class CrawlBookList {
     private int page;
     private Progress progress;
     //多线程进度
+    private final Object progressLock = new Object();
     private boolean[] progressArray;
     private List<Book> bookList;
 
@@ -493,14 +494,16 @@ public class CrawlBookList {
     /**
      * 检查是否一页的任务都完成了
      */
-    private synchronized boolean checkPageDataFinished() {
-        for (Boolean each : progressArray) {
-            //只要有没完成的就直接返回
-            if (!each)
-                return false;
+    private boolean checkPageDataFinished() {
+        synchronized (progressLock) {
+            for (Boolean each : progressArray) {
+                //只要有没完成的就直接返回
+                if (!each)
+                    return false;
+            }
+            //全部完成
+            return true;
         }
-        //全部完成
-        return true;
     }
 
     /**
@@ -547,7 +550,9 @@ public class CrawlBookList {
                 //处理数据
                 handleData(book);
                 //处理完成，更新进度
-                progressArray[finalI] = true;
+                synchronized (progressLock) {
+                    progressArray[finalI] = true;
+                }
                 //检查是否一页的任务都完成了
                 if (checkPageDataFinished())
                     onPageDataFinished();
@@ -573,6 +578,7 @@ public class CrawlBookList {
      */
     @Test
     public void run() {
+        long startTime = System.currentTimeMillis();
         //加载进度
         loadProgress();
         //爬虫正式开始
@@ -580,9 +586,12 @@ public class CrawlBookList {
         boolean terminated = executorService.isTerminated();
         while (!terminated) {
             terminated = executorService.isTerminated();
-            System.out.println(Thread.currentThread().getName() + " still waiting...");
             try {
                 Thread.sleep(2000);
+                long costTime = System.currentTimeMillis() - startTime;
+                String timeString = TimeUtil.getTimeString(costTime);
+                System.out.println("page = " + page + " " + timeString + "  "
+                        + Thread.currentThread().getName() + " still waiting...");
             } catch (InterruptedException e) {
                 e.printStackTrace();
             }
