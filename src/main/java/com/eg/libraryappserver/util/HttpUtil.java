@@ -31,36 +31,42 @@ public class HttpUtil {
     private static String userAgent = "Mozilla/5.0 (Windows NT 6.1; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/73.0.3683.86 Safari/537.36";
     private static String contentType = "application/x-www-form-urlencoded";
 
-    public static String get(String url) {
-        try {
-            //执行第一次
-            return tryGetOnce(url);
-        } catch (Exception e) {
-            //第一次错误
-            System.err.println("http get error: " + e.getMessage());
-            System.out.println("retry 1: " + url);
-            try {
-                //执行第二次
-                return tryGetOnce(url);
-            } catch (IOException ex) {
-                //第二次错误
-                System.err.println("http get error: " + e.getMessage());
-                System.out.println("retry 2: " + url);
-                try {
-                    //执行第三次
-                    return tryGetOnce(url);
-                } catch (IOException exc) {
-                    //第三次错误
-                    System.err.println("http get error: " + e.getMessage());
-                    System.out.println("retry 1: " + url);
-                    exc.printStackTrace();
-                }
-            }
-        }
-        return null;
-    }
+//    public static String infiniteGet(String url) {
+//        try {
+//            //执行第一次
+//            return tryGetOnce(url);
+//        } catch (Exception e) {
+//            //第一次错误
+//            System.err.println("http get error: " + e.getMessage());
+//            System.out.println("retry 1: " + url);
+//            try {
+//                //执行第二次
+//                return tryGetOnce(url);
+//            } catch (IOException ex) {
+//                //第二次错误
+//                System.err.println("http get error: " + e.getMessage());
+//                System.out.println("retry 2: " + url);
+//                try {
+//                    //执行第三次
+//                    return tryGetOnce(url);
+//                } catch (IOException exc) {
+//                    //第三次错误
+//                    System.err.println("http get error: " + e.getMessage());
+//                    System.out.println("retry 1: " + url);
+//                    exc.printStackTrace();
+//                }
+//            }
+//        }
+//        return null;
+//    }
 
-    private static String tryGetOnce(String url) throws IOException {
+    /**
+     * 无限重试get请求
+     *
+     * @param url
+     * @return
+     */
+    public static String infiniteGet(String url) {
         System.out.println(Thread.currentThread().getName() + " HttpClient GET: " + url);
         RequestConfig requestConfig = RequestConfig.custom()
                 .setConnectTimeout(20000)
@@ -70,26 +76,27 @@ public class HttpUtil {
         //无限重试client
         CloseableHttpClient client = HttpClientBuilder.create()
                 .setRetryHandler((exception, executionCount, context) -> {
-                    System.err.println(exception.getMessage());
-                    if (executionCount >= Integer.MAX_VALUE)
-                        return false;
-                    else
-                        return true;
+                    System.err.println("重试异常：" + exception.getMessage());
+                    return true;
                 })
                 .setDefaultRequestConfig(requestConfig)
                 .build();
-        //原来的普通client
-//        CloseableHttpClient client = HttpClients.createDefault();
         HttpGet httpGet = new HttpGet();
+        httpGet.setConfig(requestConfig);
         httpGet.addHeader("User-Agent", userAgent);
         httpGet.setHeader("Content-type", contentType);
         httpGet.setHeader("Connection", "keep-alive");
-
-        httpGet.setConfig(requestConfig);
         httpGet.setURI(URI.create(url));
-        CloseableHttpResponse response = client.execute(httpGet);
-        HttpEntity entity = response.getEntity();
-        return EntityUtils.toString(entity, Constants.CHARSET);
+        CloseableHttpResponse response;
+        try {
+            response = client.execute(httpGet);
+            HttpEntity entity = response.getEntity();
+            return EntityUtils.toString(entity, Constants.CHARSET);
+        } catch (IOException e) {
+            System.err.println("} catch (IOException e) {");
+            e.printStackTrace();
+            return infiniteGet(url);
+        }
     }
 
     /**

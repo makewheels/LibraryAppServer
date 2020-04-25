@@ -23,7 +23,7 @@ public class CrawlUtil {
 			}
 		}
 		lastRequestTime = System.currentTimeMillis();
-		return HttpUtil.get(url);
+		return HttpUtil.infiniteGet(url);
 	}
 
 }

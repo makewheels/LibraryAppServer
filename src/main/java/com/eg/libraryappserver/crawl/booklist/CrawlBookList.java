@@ -96,7 +96,7 @@ public class CrawlBookList {
                 + isbns + "&callback=" + callback + "&jsoncallback=jQuery"
                 + RandomStringUtils.randomNumeric(20) + "_"
                 + System.currentTimeMillis() + "&_=" + System.currentTimeMillis();
-        String response = HttpUtil.get(url);
+        String response = HttpUtil.infiniteGet(url);
         if (response.startsWith(callback + "(")) {
             response = StringUtils.replaceOnce(response, callback + "(", "");
             response = response.substring(0, response.length() - 1);
@@ -232,7 +232,7 @@ public class CrawlBookList {
         }
         String doubanUrl_1 = "https://api.douban.com/v2/book/isbn/";
         String doubanUrl_2 = "?apikey=0df993c66c0c636e29ecbb5344252a4a";
-        String doubanJson = HttpUtil.get(doubanUrl_1 + isbn + doubanUrl_2);
+        String doubanJson = HttpUtil.infiniteGet(doubanUrl_1 + isbn + doubanUrl_2);
         //如果豆瓣返回错误信息
         if (doubanJson.equals(
                 "{\"msg\":\"book_not_found\",\"code\":6000,\"request\":\"GET \\/v2\\/book\\/isbn\\/")) {
@@ -261,7 +261,7 @@ public class CrawlBookList {
         //查询holdingList接口url
         String holdingListUrl_1 = "http://60.218.184.234:8091/opac/api/holding/";
         String holdingListUrl_2 = "?limitLibcodes=";
-        String json = HttpUtil.get(holdingListUrl_1 + bookrecno + holdingListUrl_2);
+        String json = HttpUtil.infiniteGet(holdingListUrl_1 + bookrecno + holdingListUrl_2);
         JSONObject jsonObject = JSONObject.parseObject(json);
         //holdingList
         List<Holding> holdingList = JSON.parseArray(JSON.toJSONString(jsonObject.get("holdingList")),
