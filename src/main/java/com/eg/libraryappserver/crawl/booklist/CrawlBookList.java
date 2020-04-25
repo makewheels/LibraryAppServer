@@ -47,9 +47,8 @@ import java.util.concurrent.Executors;
 @RunWith(SpringRunner.class)
 @SpringBootTest()
 public class CrawlBookList {
-    private String PROGRESS_KEY = "CrawlBookList";
     //是否保存到数据库开关
-    private boolean saveSwitch = false;
+    private boolean saveSwitch = true;
 
     private BookRepository bookRepository;
     private BorrowRecordRepository borrowRecordRepository;
@@ -144,7 +143,7 @@ public class CrawlBookList {
             isbn = isbn.replace(" (cased.) :", "");
             isbn = isbn.replace(":", "");
             isbn = isbn.replace(" ", "");
-            System.out.println("final isbn: " + isbn);
+            System.out.println(Thread.currentThread().getName() + " final isbn: " + isbn);
             fromLibrary.setIsbn(isbn);
             String bookrecno = img.attr("bookrecno").trim();
             fromLibrary.setBookrecno(bookrecno);
@@ -230,7 +229,6 @@ public class CrawlBookList {
                                 resourceLink = resourceLink.trim();
                             fromLibrary.setCoverlink(coverlink);
                             fromLibrary.setResourceLink(resourceLink);
-                            System.out.println(book.getFromLibrary().getCoverlink());
                         }
                     }
                 }
@@ -499,6 +497,7 @@ public class CrawlBookList {
      * 加载进度
      */
     private void loadProgress() {
+        String PROGRESS_KEY = "CrawlBookList";
         progress = progressRepository.findProgressByKey(PROGRESS_KEY);
         if (progress == null) {
             progress = new Progress();

@@ -70,7 +70,7 @@ public class BookController {
         if (password == null || !password.equals("ETwrayANWeniq6HY"))
             return null;
         //从数据库中查
-        List<Holding> holdingList = bookService.getPositionMissionHoldings(10);
+        List<Holding> holdingList = bookService.getPositionMissionHoldings(50);
         List<BarcodePosition> barcodePositionList = new ArrayList<>();
         for (Holding holding : holdingList) {
             BarcodePosition barcodePosition = new BarcodePosition();
@@ -118,14 +118,28 @@ public class BookController {
             } else {
                 position.setUpdateTime(new Date());
             }
-            position.setPosition(barcodePosition.getPosition());
+            position.setProvider(provider);
+            String positionString = barcodePosition.getPosition();
+            position.setPosition(positionString);
+            //解析position
+            String coordinate=positionString.split("|")[0];
+            String right = positionString.split("|")[1];
+            String room = right.split(" ")[0];
+            String detailPosition = right.split(" ")[1];
+
+            position.setCoordinate(coordinate);
+            position.setRoom(room);
+            position.setDetailPosition(detailPosition);
+
             //todo
+            //保存holding
+//            holdingRepository.save(holding);
 
             //更新进度
             long holdingIndex = holding.getIndex();
             KeyValue progress = bookService.getPositionMissionProgress();
             progress.setValue(holdingIndex);
-            keyValueRepository.save(progress);
+//            keyValueRepository.save(progress);
         }
         return "ok";
     }
