@@ -150,29 +150,6 @@ public class CrawlBookList {
             fromLibrary.setBookrecno(bookrecno);
             Element bookmetaTD = tr.child(1);
             Element bookmeta = bookmetaTD.child(0);
-            //图书馆获取图片url的api
-            if (StringUtils.isNoneBlank(isbn)) {
-                LibraryImageApiResult libraryImageApi = getLibraryImageApi(
-                        isbn.replace("-", ""));
-                if (libraryImageApi != null) {
-                    List<Result> resultList = libraryImageApi.getResult();
-                    if (CollectionUtils.isNotEmpty(resultList)) {
-                        Result result = resultList.get(0);
-                        if (result != null) {
-                            String coverlink = result.getCoverlink();
-                            if (coverlink != null)
-                                coverlink = coverlink.trim();
-                            String resourceLink = result.getResourceLink();
-                            if (resourceLink != null)
-                                resourceLink = resourceLink.trim();
-                            fromLibrary.setCoverlink(coverlink);
-                            fromLibrary.setResourceLink(resourceLink);
-                        }
-                    }
-                }
-            }
-            //其实这里应该再检查一下图片，那等到后面连着豆瓣的一起检查也行，其实现在就已经有豆瓣的图片了
-
             //开始获取右边的了
             String title = bookmeta.child(0).child(0).child(0).text().trim();
             String author = bookmeta.child(1).child(0).text().trim();
@@ -190,10 +167,12 @@ public class CrawlBookList {
             //html页面数据就此结束
             bookList.add(book);
         }
+        //再获取图书馆的图片url
+        handleLibraryCoverImageUrl(bookList);
         // 再发请求，获取索书号
         StringBuilder bookrecnos = new StringBuilder();
         for (Book book : bookList) {
-            bookrecnos.append(book.getFromLibrary().getBookrecno() + ",");
+            bookrecnos.append(book.getFromLibrary().getBookrecno()).append(",");
         }
         bookrecnos.deleteCharAt(bookrecnos.length() - 1);
         String xml = null;
@@ -217,6 +196,47 @@ public class CrawlBookList {
             }
         }
         return bookList;
+    }
+
+    /**
+     * 获取图书馆的图片url
+     *
+     * @param bookList
+     */
+    private void handleLibraryCoverImageUrl(List<Book> bookList) {
+        //拼接请求参数
+        StringBuilder isbns = new StringBuilder();
+        for (Book book : bookList) {
+            String isbn = book.getFromLibrary().getIsbn().replace("-", "");
+            isbns.append(isbn).append(",");
+        }
+        isbns.deleteCharAt(isbns.length() - 1);
+        //图书馆获取图片url的api
+        List<Result> resultList = getLibraryImageApi(isbns.toString()).getResult();
+        if (CollectionUtils.isNotEmpty(resultList)) {
+            //遍历bookList
+            for (Book book : bookList) {
+                //从结果中查找对应isbn
+                for (Result result : resultList) {
+                    if (result != null) {
+                        FromLibrary fromLibrary = book.getFromLibrary();
+                        String isbn = fromLibrary.getIsbn().replace("-", "");
+                        if (isbn.equals(result.getIsbn())) {
+                            String coverlink = result.getCoverlink();
+                            if (StringUtils.isNotEmpty(coverlink))
+                                coverlink = coverlink.trim();
+                            String resourceLink = result.getResourceLink();
+                            if (StringUtils.isNotEmpty(resourceLink))
+                                resourceLink = resourceLink.trim();
+                            fromLibrary.setCoverlink(coverlink);
+                            fromLibrary.setResourceLink(resourceLink);
+                            System.out.println(book.getFromLibrary().getCoverlink());
+                        }
+                    }
+                }
+            }
+        }
+        //其实这里应该再检查一下图片，那等到后面连着豆瓣的一起检查也行，其实现在就已经有豆瓣的图片了
     }
 
     /**
@@ -321,7 +341,8 @@ public class CrawlBookList {
             if (saveSwitch) {
                 //要保存借阅记录之前，先看数据库中有没有
                 String barcode = borrowRecord.getBarcode();
-                List<BorrowRecord> findBorrowRecords = borrowRecordRepository.findBorrowRecordsByBarcode(barcode);
+                List<BorrowRecord> findBorrowRecords
+                        = borrowRecordRepository.findBorrowRecordsByBarcode(barcode);
                 //如果没有则保存，如果已有则跳过
                 if (CollectionUtils.isEmpty(findBorrowRecords)) {
                     borrowRecordRepository.save(borrowRecord);
@@ -589,8 +610,8 @@ public class CrawlBookList {
             try {
                 Thread.sleep(2000);
                 String costTime = TimeUtil.getTimeString(System.currentTimeMillis() - startTime);
-                System.out.println("\033[1;93;45m" + "page = " + page + "  costTime = " + costTime + "  "
-                        + Thread.currentThread().getName() + " still waiting..." + "\033[m");
+                System.out.println("\033[1;93;45m" + "page = " + page + "  costTime = " + costTime
+                        + "  " + Thread.currentThread().getName() + " still waiting..." + "\033[m");
             } catch (InterruptedException e) {
                 e.printStackTrace();
             }
