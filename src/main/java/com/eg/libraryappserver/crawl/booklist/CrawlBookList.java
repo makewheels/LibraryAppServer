@@ -588,10 +588,9 @@ public class CrawlBookList {
             terminated = executorService.isTerminated();
             try {
                 Thread.sleep(2000);
-                long costTime = System.currentTimeMillis() - startTime;
-                String timeString = TimeUtil.getTimeString(costTime);
-                System.out.println("page = " + page + " " + timeString + "  "
-                        + Thread.currentThread().getName() + " still waiting...");
+                String costTime = TimeUtil.getTimeString(System.currentTimeMillis() - startTime);
+                System.out.println("\033[1;93;45m" + "page = " + page + "  costTime = " + costTime + "  "
+                        + Thread.currentThread().getName() + " still waiting..." + "\033[m");
             } catch (InterruptedException e) {
                 e.printStackTrace();
             }

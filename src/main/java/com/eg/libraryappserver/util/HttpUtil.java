@@ -76,7 +76,8 @@ public class HttpUtil {
         //无限重试client
         CloseableHttpClient client = HttpClientBuilder.create()
                 .setRetryHandler((exception, executionCount, context) -> {
-                    System.err.println("重试异常：" + exception.getMessage());
+                    System.err.println(Thread.currentThread().getName()
+                            + " 重试异常：" + exception.getMessage());
                     return true;
                 })
                 .setDefaultRequestConfig(requestConfig)
