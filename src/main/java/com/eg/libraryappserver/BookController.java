@@ -71,7 +71,7 @@ public class BookController {
         if (password == null || !password.equals("ETwrayANWeniq6HY"))
             return null;
         //从数据库中查
-        List<Holding> holdingList = bookService.getPositionMissionHoldings(50);
+        List<Holding> holdingList = bookService.getPositionMissionHoldings(100);
         List<BarcodePosition> barcodePositionList = new ArrayList<>();
         for (Holding holding : holdingList) {
             BarcodePosition barcodePosition = new BarcodePosition();
