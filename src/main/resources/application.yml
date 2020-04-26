@@ -1,0 +1,13 @@
+server:
+  servlet:
+    context-path: /libraryapp
+  port: 5001
+spring:
+  data:
+    mongodb:
+      host: localhost
+      port: 27017
+      authentication-database: admin
+      username: root
+      password: mongodpwdVEfwrAYY5ozsz
+      database: libraryapp
