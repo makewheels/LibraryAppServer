@@ -9,6 +9,7 @@ import lombok.Data;
 public class BarcodePosition {
     private String barcode;
     private String position;
+    private String message;
     private long timestamp;
     private String sign;
 }

@@ -14,6 +14,7 @@ import com.eg.libraryappserver.crawl.booklist.KeyValue;
 import com.eg.libraryappserver.crawl.booklist.KeyValueRepository;
 import org.apache.commons.beanutils.BeanUtils;
 import org.apache.commons.codec.digest.DigestUtils;
+import org.apache.commons.lang3.StringUtils;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.data.domain.PageRequest;
 import org.springframework.stereotype.Controller;
@@ -119,19 +120,34 @@ public class BookController {
                 position.setUpdateTime(new Date());
             }
             position.setProvider(provider);
+            position.setMessage(barcodePosition.getMessage());
+            //position字符串
             String positionString = barcodePosition.getPosition();
-            position.setPosition(positionString);
-            //解析position
-            String coordinate=positionString.split("|")[0];
-            String right = positionString.split("|")[1];
-            String room = right.split(" ")[0];
-            String detailPosition = right.split(" ")[1];
+            //可能为空
+            if (StringUtils.isNotEmpty(positionString)) {
+                position.setPosition(positionString);
+                //解析position
+                String coordinate = positionString.split("|")[0];
+                String right = positionString.split("|")[1];
+                String room = right.split(" ")[0];
+                String detailPosition = right.split(" ")[1];
 
-            position.setCoordinate(coordinate);
-            position.setRoom(room);
-            position.setDetailPosition(detailPosition);
+                int row = Integer.parseInt(StringUtils.substringBefore(detailPosition, "排"));
+                String side = StringUtils.substringBetween(detailPosition, "排", "面");
+                int shelf = Integer.parseInt(StringUtils.substringBetween(detailPosition, "面", "架"));
+                int level = Integer.parseInt(StringUtils.substringBetween(detailPosition, "架", "层"));
 
-            //todo
+                position.setRow(row);
+                position.setSide(side);
+                position.setShelf(shelf);
+                position.setLevel(level);
+
+                position.setCoordinate(coordinate);
+                position.setRoom(room);
+                position.setDetailPosition(detailPosition);
+            }
+
+            System.out.println(position);
             //保存holding
 //            holdingRepository.save(holding);
 
