@@ -6,6 +6,7 @@ import com.eg.libraryappserver.bean.book.library.holding.Holding;
 import com.eg.libraryappserver.bean.book.library.holding.Position;
 import com.eg.libraryappserver.bean.book.library.holding.repository.HoldingRepository;
 import com.eg.libraryappserver.crawl.booklist.KeyValue;
+import com.eg.libraryappserver.util.KeyValueConstants;
 import org.apache.commons.codec.digest.DigestUtils;
 import org.apache.commons.lang3.StringUtils;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -15,9 +16,7 @@ import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RequestParam;
 import org.springframework.web.bind.annotation.ResponseBody;
 
-import java.util.ArrayList;
-import java.util.Date;
-import java.util.List;
+import java.util.*;
 
 /**
  * @time 2020-04-27 16:16
@@ -53,7 +52,6 @@ public class BookPositionController {
     @RequestMapping("/requestPositionMission")
     @ResponseBody
     public String requestPositionMission(@RequestParam String password) {
-        System.out.println("BookPositionController.requestPositionMission");
         if (StringUtils.isEmpty(password))
             return null;
         if (!password.equals("ETwrayANWeniq6HY"))
@@ -73,15 +71,17 @@ public class BookPositionController {
      * 提交书的位置任务
      *
      * @param provider
+     * @param barcodePositionJson
      * @return
      */
     @PostMapping("/submitPositionMission")
     @ResponseBody
     public String submitPositionMission(@RequestParam String provider,
                                         @RequestParam String barcodePositionJson) {
-        List<BarcodePosition> barcodePositionList = JSON.parseArray(barcodePositionJson, BarcodePosition.class);
+        System.out.println("BookPositionController.submitPositionMission");
+        List<BarcodePosition> barcodePositionList
+                = JSON.parseArray(barcodePositionJson, BarcodePosition.class);
         //签名校验
-        String signKey = "vPUYt6q1AzmmjzXG";
         for (BarcodePosition barcodePosition : barcodePositionList) {
             String barcode = barcodePosition.getBarcode();
             String position = barcodePosition.getPosition();
@@ -89,13 +89,17 @@ public class BookPositionController {
             long timestamp = barcodePosition.getTimestamp();
             long tenMinutes = 1000 * 60 * 10;
             long diffTime = System.currentTimeMillis() - timestamp;
-            if (diffTime > tenMinutes)
+            if (diffTime > tenMinutes) {
                 return null;
+            }
             String clientSign = barcodePosition.getSign();
+            String signKey = "vPUYt6q1AzmmjzXG";
             String serverSign = DigestUtils.md5Hex(barcode + position + timestamp + signKey);
             if (!clientSign.equals(serverSign))
                 return null;
-        }
+    }
+        //集合排序
+//        barcodePositionList.sort((o1, o2) -> 0);
         //保存位置数据
         for (BarcodePosition barcodePosition : barcodePositionList) {
             String barcode = barcodePosition.getBarcode();
@@ -116,8 +120,8 @@ public class BookPositionController {
             if (StringUtils.isNotEmpty(positionString)) {
                 position.setPosition(positionString);
                 //解析position
-                String coordinate = positionString.split("|")[0];
-                String right = positionString.split("|")[1];
+                String coordinate = positionString.split("\\|")[0];
+                String right = positionString.split("\\|")[1];
                 String room = right.split(" ")[0];
                 String detailPosition = right.split(" ")[1];
 
@@ -136,16 +140,22 @@ public class BookPositionController {
                 position.setDetailPosition(detailPosition);
             }
 
-            System.out.println(position);
+            System.out.println(JSON.toJSONString(position));
             //保存holding
 //            holdingRepository.save(holding);
 
             //更新进度
-            long holdingIndex = holding.getIndex();
             KeyValue progress = bookService.getPositionMissionProgress();
+            //如果没有progress则新建
+            if (progress == null) {
+                progress = new KeyValue();
+                progress.setKey(KeyValueConstants.KEY_POSITION_MISSION_PROGRESS);
+            }
+            long holdingIndex = holding.getIndex();
             progress.setValue(holdingIndex);
-//            keyValueRepository.save(progress);
         }
+        //保存进度
+//            keyValueRepository.save(progress);
         return "ok";
     }
 }

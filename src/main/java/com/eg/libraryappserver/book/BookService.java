@@ -3,6 +3,7 @@ package com.eg.libraryappserver.book;
 import com.eg.libraryappserver.bean.book.library.holding.Holding;
 import com.eg.libraryappserver.crawl.booklist.KeyValue;
 import com.eg.libraryappserver.crawl.booklist.KeyValueRepository;
+import com.eg.libraryappserver.util.KeyValueConstants;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.data.mongodb.core.MongoTemplate;
 import org.springframework.data.mongodb.core.query.Criteria;
@@ -16,7 +17,6 @@ import java.util.List;
  */
 @Service
 public class BookService {
-    private static final String KEY_POSITION_MISSION_PROGRESS_ID = "KEY_POSITION_MISSION_PROGRESS_ID";
     private KeyValueRepository keyValueRepository;
     private MongoTemplate mongoTemplate;
 
@@ -36,7 +36,7 @@ public class BookService {
      * @return
      */
     public KeyValue getPositionMissionProgress() {
-        return keyValueRepository.findByKey(KEY_POSITION_MISSION_PROGRESS_ID);
+        return keyValueRepository.findByKey(KeyValueConstants.KEY_POSITION_MISSION_PROGRESS);
     }
 
     /**
