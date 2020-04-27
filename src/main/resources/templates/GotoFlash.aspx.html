@@ -1,0 +1,64 @@
+
+
+<!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Transitional//EN" "http://www.w3.org/TR/xhtml1/DTD/xhtml1-transitional.dtd">
+<html xmlns="http://www.w3.org/1999/xhtml">
+<head id="Head1"><title>
+	图书定位
+</title><link href="../css/xStyle.css" type="text/css" rel="stylesheet" />
+
+    <script type="text/javascript" src="../js/swfobject.js" >  </script>
+    
+    <script type="text/javascript">
+        function ShowAndClose(szMsg) {
+            alert(szMsg);
+            //window.close();
+        }
+    </script>
+
+</head>
+<body>
+    <div id="container">
+        <div id="flashcontent" style="height: 100%; width: 100%">
+        </div>
+
+    </div>
+
+    <script type="text/javascript">
+        window.onresize = window.onload = function InitFlash() {
+            var strWZxxxxxx = "01040103800405|文献借阅一室 19排B面4架5层";
+            var strMsg = "";
+            if (strWZxxxxxx != "" && strWZxxxxxx != "图书未上架") {
+                var szFilename = "shift" + strWZxxxxxx.substring(0, 4) + ".swf";
+                var so = new SWFObject(szFilename, "shift", document.documentElement.clientWidth, document.documentElement.clientHeight - 50, "9", "#FFffff");
+                so.write("flashcontent");
+                window.document.shift.SetVariable("tscwxx", strWZxxxxxx);
+                window.document.shift.Play();
+            }
+            else {
+                if(strWZxxxxxx == "图书未上架"){  //jiangce 2012.07.04
+                strMsg = "图书未上架，无法定位!";
+                }
+                
+                if (strMsg == null || strMsg == "") {
+                    strMsg="非自助借还(RFID)图书，无法定位!";
+                }
+
+                alert(strMsg);
+                
+                history.go(-1);//jiangce 2012.09.05
+                //window.opener=null;    
+                //window.open("","_self");                 
+                //window.close();
+            }
+        };
+        
+        //jiangce 2011.11.14    
+        function closewindow(){ 
+           // wb.execwb(45,1); 
+           window.close();
+        }
+    </script> 
+    
+
+</body>
+</html>

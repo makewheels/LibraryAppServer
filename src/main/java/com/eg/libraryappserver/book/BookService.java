@@ -1,4 +1,4 @@
-package com.eg.libraryappserver;
+package com.eg.libraryappserver.book;
 
 import com.eg.libraryappserver.bean.book.library.holding.Holding;
 import com.eg.libraryappserver.crawl.booklist.KeyValue;
