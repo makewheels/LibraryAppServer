@@ -4,6 +4,7 @@ import com.eg.libraryappserver.bean.book.library.holding.Holding;
 import com.eg.libraryappserver.crawl.booklist.KeyValue;
 import com.eg.libraryappserver.crawl.booklist.KeyValueRepository;
 import com.eg.libraryappserver.util.KeyValueConstants;
+import org.apache.commons.collections4.CollectionUtils;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.data.mongodb.core.MongoTemplate;
 import org.springframework.data.mongodb.core.query.Criteria;
@@ -68,7 +69,10 @@ public class BookService {
         query.limit(amount);
         List<Holding> holdingList = mongoTemplate.find(query, Holding.class);
         //更新进度
-        progress.setValue(progressIndex + amount);
+        if (CollectionUtils.isEmpty(holdingList))
+            progress.setValue(0L);
+        else
+            progress.setValue(progressIndex + amount);
         keyValueRepository.save(progress);
         System.out.println(progressIndex);
         return holdingList;
