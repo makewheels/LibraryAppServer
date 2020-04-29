@@ -30,7 +30,7 @@ public class SaveMongoEventListener extends AbstractMongoEventListener<Object> {
      * @param event
      */
     @Override
-    public void onBeforeConvert(BeforeConvertEvent<Object> event) {
+    public synchronized void onBeforeConvert(BeforeConvertEvent<Object> event) {
         final Object source = event.getSource(); // 获取事件最初发生的对象
         // 使用反射工具类，实现回调接口的方法，对成员进行操作
         ReflectionUtils.doWithFields(source.getClass(), field -> {
@@ -52,7 +52,7 @@ public class SaveMongoEventListener extends AbstractMongoEventListener<Object> {
      * @param collName 集合名称（一般规则是，类名的第一个字母小写，然后按照驼峰书写法）
      * @return Long 序列值
      */
-    private Long getNextId(String collName) {
+    private synchronized Long getNextId(String collName) {
         Query query = new Query(Criteria.where("collName").is(collName));
         Update update = new Update();
         update.inc("seqId", 1);

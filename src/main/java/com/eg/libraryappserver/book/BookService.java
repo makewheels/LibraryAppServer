@@ -70,6 +70,7 @@ public class BookService {
         //更新进度
         progress.setValue(progressIndex + amount);
         keyValueRepository.save(progress);
+        System.out.println(progressIndex);
         return holdingList;
     }
 }

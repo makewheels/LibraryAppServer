@@ -6,6 +6,7 @@ import com.eg.libraryappserver.bean.book.library.holding.Holding;
 import com.eg.libraryappserver.bean.book.library.holding.Position;
 import com.eg.libraryappserver.bean.book.library.holding.repository.HoldingRepository;
 import org.apache.commons.codec.digest.DigestUtils;
+import org.apache.commons.collections4.CollectionUtils;
 import org.apache.commons.lang3.StringUtils;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Controller;
@@ -60,6 +61,8 @@ public class BookPositionController {
             return null;
         //从数据库中查
         List<Holding> holdingList = bookService.getPositionMissionHoldings(amount);
+        if (CollectionUtils.isEmpty(holdingList))
+            return null;
         List<BarcodePosition> barcodePositionList = new ArrayList<>();
         for (Holding holding : holdingList) {
             BarcodePosition barcodePosition = new BarcodePosition();

@@ -314,8 +314,7 @@ public class CrawlBookList {
         //统计借阅数，续借数
         int borrowCount = 0;
         int renewCount = 0;
-        for (
-                Holding holding : holdingList) {
+        for (Holding holding : holdingList) {
             borrowCount += holding.getTotalLoanNum();
             renewCount += holding.getTotalRenewNum();
         }
@@ -325,9 +324,9 @@ public class CrawlBookList {
         Map jsonLoanWorkMap = jsonObject.getJSONObject("loanWorkMap");
         Set set = jsonLoanWorkMap.keySet();
         Map<String, BorrowRecord> loanWorkMap = new HashMap<>();
-        for (
-                Object key : set) {
-            BorrowRecord borrowRecord = JSON.parseObject(JSON.toJSONString(jsonLoanWorkMap.get(key)), BorrowRecord.class);
+        for (Object key : set) {
+            BorrowRecord borrowRecord = JSON.parseObject(JSON.toJSONString(jsonLoanWorkMap.get(key)),
+                    BorrowRecord.class);
             loanWorkMap.put((String) key, borrowRecord);
         }
         //loanWorkMap已准备就绪
