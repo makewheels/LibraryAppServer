@@ -9,5 +9,7 @@ import org.springframework.stereotype.Repository;
  */
 @Repository
 public interface HoldingRepository extends MongoRepository<Holding, String> {
+    Holding findBy_id(String _id);
+
     Holding findHoldingByBarcode(String barcode);
 }

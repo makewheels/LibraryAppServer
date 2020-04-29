@@ -36,7 +36,7 @@ public class BookService {
      * @return
      */
     public KeyValue getPositionMissionProgress() {
-        return keyValueRepository.findByKey(KeyValueConstants.KEY_POSITION_MISSION_PROGRESS);
+        return keyValueRepository.findByKey(KeyValueConstants.KEY_POSITION_MISSION_REQUEST_PROGRESS);
     }
 
     /**
@@ -44,12 +44,15 @@ public class BookService {
      *
      * @return
      */
-    public long getPositionMissionHoldingIndex() {
-        long lastIndex = 0;
+    public KeyValue getRequestPositionMissionProgress() {
         KeyValue progress = getPositionMissionProgress();
-        if (progress != null)
-            lastIndex = (long) progress.getValue();
-        return lastIndex;
+        if (progress == null) {
+            progress = new KeyValue();
+            progress.setKey(KeyValueConstants.KEY_POSITION_MISSION_REQUEST_PROGRESS);
+            progress.setValue(0L);
+            keyValueRepository.save(progress);
+        }
+        return progress;
     }
 
     /**
@@ -59,10 +62,14 @@ public class BookService {
      * @return
      */
     public List<Holding> getPositionMissionHoldings(int amount) {
-        long lastIndex = getPositionMissionHoldingIndex();
-        lastIndex++;
-        Query query = Query.query(Criteria.where("index").gt(lastIndex));
+        KeyValue progress = getRequestPositionMissionProgress();
+        long progressIndex = (long) progress.getValue();
+        Query query = Query.query(Criteria.where("index").gt(progressIndex));
         query.limit(amount);
-        return mongoTemplate.find(query, Holding.class);
+        List<Holding> holdingList = mongoTemplate.find(query, Holding.class);
+        //更新进度
+        progress.setValue(progressIndex + amount);
+        keyValueRepository.save(progress);
+        return holdingList;
     }
 }

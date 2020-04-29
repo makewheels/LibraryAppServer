@@ -7,6 +7,9 @@ import lombok.Data;
  */
 @Data
 public class BarcodePosition {
+    private long holdingIndex;
+    private String holdingMongoId;
+
     private String barcode;
     private String position;
     private String message;
