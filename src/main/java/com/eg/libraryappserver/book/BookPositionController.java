@@ -41,6 +41,7 @@ public class BookPositionController {
 
     @RequestMapping("/goToFlashDemo")
     public String goToFlashDemoHtml() {
+        System.out.println("goToFlashDemo " + System.currentTimeMillis());
         return "/GotoFlash.aspx.html";
     }
 
@@ -85,7 +86,6 @@ public class BookPositionController {
     @ResponseBody
     public String submitPositionMission(@RequestParam String provider,
                                         @RequestParam String barcodePositionJson) {
-        System.out.println("BookPositionController.submitPositionMission");
         List<BarcodePosition> barcodePositionList
                 = JSON.parseArray(barcodePositionJson, BarcodePosition.class);
         //签名校验
