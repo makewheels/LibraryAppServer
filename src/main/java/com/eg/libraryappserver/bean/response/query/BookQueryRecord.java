@@ -14,7 +14,7 @@ public class BookQueryRecord {
     private String isbn13;          //没有横杠，纯数字
     private String callno;          //索书号
     private String bookrecno;       //书的id，例如：127796
-    private String coverImageUrl;   //封面图片url
+    private String coverUrl;   //封面图片url
     private String title;           //书名
     private String subtitle;        //子书名
     private List<String> authorList;//作者列表
