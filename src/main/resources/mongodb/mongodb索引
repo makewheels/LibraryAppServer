@@ -1,0 +1,11 @@
+#获取索引
+db.getCollection('book').getIndexes()
+
+#查找
+db.getCollection('book').find({bookId:"RkxG0vnsmhxcukrAYdhBD"})
+
+#创建索引
+db.getCollection('book').ensureIndex({bookId:1})
+
+#删除索引
+db.getCollection('book').dropIndex("bookId_1")
