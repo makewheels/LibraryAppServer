@@ -2,6 +2,7 @@ server:
   servlet:
     context-path: /libraryapp
   port: 5001
+
 spring:
   data:
     mongodb:

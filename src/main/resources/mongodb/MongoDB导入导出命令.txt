@@ -5,3 +5,4 @@ mongodump
 mongorestore -h 106.12.57.49:27017 -d libraryapp -u root -p mongodpwdVEfwrAYY5ozsz --authenticationDatabase admin --dir "C:/Users/Administrator/dump/libraryapp/"
 
 mongo 106.12.57.49:27017 -u root -p mongodpwdVEfwrAYY5ozsz --authenticationDatabase admin
+
