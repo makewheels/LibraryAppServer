@@ -503,8 +503,9 @@ public class CrawlBookList {
             progress.setCreateTime(new Date());
             progress.setKey(PROGRESS_KEY);
             progress.setPage(0);
-            if (saveSwitch)
+            if (saveSwitch) {
                 progressRepository.save(progress);
+            }
         } else {
             page = progress.getPage();
         }

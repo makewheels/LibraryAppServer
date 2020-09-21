@@ -147,7 +147,7 @@ public class BookPositionController {
 
             System.out.println(JSON.toJSONString(position));
             //保存holding
-//            holdingRepository.save(holding);
+            holdingRepository.save(holding);
         }
         return "ok";
     }
