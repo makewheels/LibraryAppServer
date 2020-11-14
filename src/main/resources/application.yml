@@ -9,6 +9,6 @@ spring:
       host: localhost
       port: 27017
       authentication-database: admin
-#      username: root
-#      password: mongodpwdVEfwrAYY5ozsz
+      username: root
+      password: mongodpwdVEfwrAYY5ozsz
       database: libraryapp
