@@ -98,6 +98,9 @@ public class BookController {
             e.printStackTrace();
         }
         bookDetailResponse.setMangoId(book.get_id());
+        //搞定位置
+        String position = bookService.getSingleBookPosition(book.getBookId());
+        bookDetailResponse.setPosition(position);
         return JSON.toJSONString(bookDetailResponse);
     }
 

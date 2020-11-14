@@ -1,10 +1,13 @@
 package com.eg.libraryappserver.book;
 
 import com.eg.libraryappserver.bean.book.library.holding.Holding;
+import com.eg.libraryappserver.bean.book.library.holding.Position;
+import com.eg.libraryappserver.bean.book.library.holding.repository.HoldingRepository;
 import com.eg.libraryappserver.crawl.booklist.KeyValue;
 import com.eg.libraryappserver.crawl.booklist.KeyValueRepository;
 import com.eg.libraryappserver.util.KeyValueConstants;
 import org.apache.commons.collections4.CollectionUtils;
+import org.apache.commons.lang3.StringUtils;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.data.mongodb.core.MongoTemplate;
 import org.springframework.data.mongodb.core.query.Criteria;
@@ -20,6 +23,7 @@ import java.util.List;
 public class BookService {
     private KeyValueRepository keyValueRepository;
     private MongoTemplate mongoTemplate;
+    private HoldingRepository holdingRepository;
 
     @Autowired
     public void setKeyValueRepository(KeyValueRepository keyValueRepository) {
@@ -29,6 +33,11 @@ public class BookService {
     @Autowired
     public void setMongoTemplate(MongoTemplate mongoTemplate) {
         this.mongoTemplate = mongoTemplate;
+    }
+
+    @Autowired
+    public void setHoldingRepository(HoldingRepository holdingRepository) {
+        this.holdingRepository = holdingRepository;
     }
 
     /**
@@ -76,5 +85,31 @@ public class BookService {
         keyValueRepository.save(progress);
         System.out.println(progressIndex);
         return holdingList;
+    }
+
+    /**
+     * 返回数的位置，只返回一个结果的string
+     *
+     * @param bookId
+     * @return
+     */
+    public String getSingleBookPosition(String bookId) {
+        List<Holding> holdingListByBookId = holdingRepository.findHoldingListByBookId(bookId);
+        String positionString = null;
+        for (Holding holding : holdingListByBookId) {
+            Position position = holding.getPosition();
+            //如果没有position
+            if (position == null) {
+                continue;
+            }
+            //如果是有message，也就是：非自助借还(RFID)图书，无法定位！
+            if (StringUtils.isNotEmpty(position.getMessage())) {
+                continue;
+            }
+            //只要找到一个正常的数据了，就可以返回了
+            positionString = position.getRoom() + "\n" + position.getDetailPosition();
+            break;
+        }
+        return positionString;
     }
 }

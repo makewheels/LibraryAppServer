@@ -19,7 +19,7 @@ public class BookDetailResponse {
 
     //豆瓣api拿到的：
     private String isbn13;          //没有横杠，纯数字
-    private String coverUrl;   //封面图片url
+    private String coverUrl;        //封面图片url
     private String title;           //书名
     private String subtitle;        //子书名
     private String originTitle;     //原书名
@@ -30,4 +30,5 @@ public class BookDetailResponse {
     private String pages;           //页码数
     private String catalog;         //目录
     private String summary;         //简述
+    private String position;        //位置
 }
