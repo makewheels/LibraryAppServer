@@ -125,7 +125,7 @@ public class BookService {
      */
     //db.getCollection('holding').find({"position.room":"文献借阅一室",
     // "position.row":10,"position.side":"A","position.shelf":6,"position.level":2})
-    public List<Holding> getBooksByTargetCell(String room, int row, String side, int shelf, int level) {
+    public List<Holding> getHoldingsByTargetCell(String room, int row, String side, int shelf, int level) {
         Position position = new Position();
         position.setRoom(room);
         position.setRow(row);
@@ -135,7 +135,13 @@ public class BookService {
         Holding holding = new Holding();
         holding.setPosition(position);
         Query query = new Query();
-        query.addCriteria(Criteria.byExample(holding));
+        query.addCriteria(
+                Criteria.where("position.room").is(room)
+                        .and("position.row").is(row)
+                        .and("position.side").is(side)
+                        .and("position.shelf").is(shelf)
+                        .and("position.level").is(level)
+        );
         query.limit(12);
         return mongoTemplate.find(query, Holding.class);
     }

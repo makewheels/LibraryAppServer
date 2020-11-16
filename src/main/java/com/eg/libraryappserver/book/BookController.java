@@ -17,7 +17,9 @@ import org.springframework.web.bind.annotation.ResponseBody;
 
 import java.lang.reflect.InvocationTargetException;
 import java.util.ArrayList;
+import java.util.HashSet;
 import java.util.List;
+import java.util.Set;
 
 /**
  * @time 2020-01-09 21:52
@@ -105,11 +107,14 @@ public class BookController {
         return JSON.toJSONString(bookDetailResponse);
     }
 
-    @RequestMapping("/getBooksByTargetCell")
-    public String getBooksByTargetCell(String room, int row, String side, int shelf, int level) {
-        List<Holding> booksByTargetCell = bookService.getBooksByTargetCell(room, row, side, shelf, level);
-        System.out.println(booksByTargetCell);
-        return "";
+    @RequestMapping("/getBookIdsByTargetCell")
+    public String getBookIdsByTargetCell(String room, int row, String side, int shelf, int level) {
+        List<Holding> booksByTargetCell = bookService.getHoldingsByTargetCell(room, row, side, shelf, level);
+        Set<String> bookIdSet = new HashSet<>();
+        for (Holding holding : booksByTargetCell) {
+            bookIdSet.add(holding.getBookId());
+        }
+        return JSON.toJSONString(bookIdSet);
     }
 
 }
