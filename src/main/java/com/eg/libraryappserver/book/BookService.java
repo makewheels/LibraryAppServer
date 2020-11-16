@@ -112,4 +112,31 @@ public class BookService {
         }
         return positionString;
     }
+
+    /**
+     * 获取指定cell位置都有什么书
+     *
+     * @param room
+     * @param row
+     * @param side
+     * @param shelf
+     * @param level
+     * @return
+     */
+    //db.getCollection('holding').find({"position.room":"文献借阅一室",
+    // "position.row":10,"position.side":"A","position.shelf":6,"position.level":2})
+    public List<Holding> getBooksByTargetCell(String room, int row, String side, int shelf, int level) {
+        Position position = new Position();
+        position.setRoom(room);
+        position.setRow(row);
+        position.setSide(side);
+        position.setShelf(shelf);
+        position.setLevel(level);
+        Holding holding = new Holding();
+        holding.setPosition(position);
+        Query query = new Query();
+        query.addCriteria(Criteria.byExample(holding));
+        query.limit(12);
+        return mongoTemplate.find(query, Holding.class);
+    }
 }

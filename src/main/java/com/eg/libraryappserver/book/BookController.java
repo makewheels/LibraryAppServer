@@ -3,6 +3,7 @@ package com.eg.libraryappserver.book;
 import com.alibaba.fastjson.JSON;
 import com.eg.libraryappserver.bean.book.Book;
 import com.eg.libraryappserver.bean.book.BookRepository;
+import com.eg.libraryappserver.bean.book.library.holding.Holding;
 import com.eg.libraryappserver.bean.response.detail.BookDetailResponse;
 import com.eg.libraryappserver.bean.response.query.BookQueryRecord;
 import com.eg.libraryappserver.bean.response.query.BookQueryResponse;
@@ -102,6 +103,13 @@ public class BookController {
         String position = bookService.getSingleBookPosition(book.getBookId());
         bookDetailResponse.setPosition(position);
         return JSON.toJSONString(bookDetailResponse);
+    }
+
+    @RequestMapping("/getBooksByTargetCell")
+    public String getBooksByTargetCell(String room, int row, String side, int shelf, int level) {
+        List<Holding> booksByTargetCell = bookService.getBooksByTargetCell(room, row, side, shelf, level);
+        System.out.println(booksByTargetCell);
+        return "";
     }
 
 }

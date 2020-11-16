@@ -16,4 +16,5 @@ public interface HoldingRepository extends MongoRepository<Holding, String> {
     Holding findHoldingByBarcode(String barcode);
 
     List<Holding> findHoldingListByBookId(String bookId);
+
 }
