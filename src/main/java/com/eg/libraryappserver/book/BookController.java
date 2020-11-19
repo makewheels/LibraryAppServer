@@ -4,6 +4,8 @@ import com.alibaba.fastjson.JSON;
 import com.eg.libraryappserver.bean.book.Book;
 import com.eg.libraryappserver.bean.book.BookRepository;
 import com.eg.libraryappserver.bean.book.library.holding.Holding;
+import com.eg.libraryappserver.bean.book.library.holding.Position;
+import com.eg.libraryappserver.bean.response.basicinfo.BookBasicInfo;
 import com.eg.libraryappserver.bean.response.detail.BookDetailResponse;
 import com.eg.libraryappserver.bean.response.query.BookQueryRecord;
 import com.eg.libraryappserver.bean.response.query.BookQueryResponse;
@@ -102,19 +104,62 @@ public class BookController {
         }
         bookDetailResponse.setMangoId(book.get_id());
         //搞定位置
-        String position = bookService.getSingleBookPosition(book.getBookId());
+        Position position = bookService.getSingleBookPosition(book.getBookId());
+        if (position != null) {
+            position.setPosition(null);
+            position.setCoordinate(null);
+            position.setProvider(null);
+            position.setCreateTime(null);
+            position.setUpdateTime(null);
+        }
         bookDetailResponse.setPosition(position);
         return JSON.toJSONString(bookDetailResponse);
     }
 
+    /**
+     * 获取指定cell的书的id list
+     *
+     * @param room
+     * @param row
+     * @param side
+     * @param shelf
+     * @param level
+     * @return
+     */
     @RequestMapping("/getBookIdsByTargetCell")
-    public String getBookIdsByTargetCell(String room, int row, String side, int shelf, int level) {
-        List<Holding> booksByTargetCell = bookService.getHoldingsByTargetCell(room, row, side, shelf, level);
+    public String getBookIdsByTargetCell(
+            String room, int row, String side, int shelf, int level) {
+        List<Holding> booksByTargetCell
+                = bookService.getHoldingsByTargetCell(room, row, side, shelf, level);
         Set<String> bookIdSet = new HashSet<>();
         for (Holding holding : booksByTargetCell) {
             bookIdSet.add(holding.getBookId());
         }
         return JSON.toJSONString(bookIdSet);
+    }
+
+    /**
+     * 获取书的基本信息
+     *
+     * @param bookIds
+     * @return
+     */
+    @RequestMapping("/getBookBasicInfoByBookIds")
+    public String getBookBasicInfoByBookIds(String bookIds) {
+        List<String> bookIdList = JSON.parseArray(bookIds, String.class);
+        List<BookBasicInfo> bookBasicInfoListList = new ArrayList<>();
+        for (String bookId : bookIdList) {
+            Book book = bookRepository.findBookByBookId(bookId);
+            BookBasicInfo bookBasicInfo = new BookBasicInfo();
+            try {
+                BeanUtils.copyProperties(bookBasicInfo, book);
+            } catch (IllegalAccessException | InvocationTargetException e) {
+                e.printStackTrace();
+            }
+            bookBasicInfo.setMongoId(book.get_id());
+            bookBasicInfoListList.add(bookBasicInfo);
+        }
+        return JSON.toJSONString(bookBasicInfoListList);
     }
 
 }

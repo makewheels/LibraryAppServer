@@ -38,7 +38,6 @@ public class BookPositionController {
         this.holdingRepository = holdingRepository;
     }
 
-
     @RequestMapping("/goToFlashDemo")
     public String goToFlashDemoHtml() {
         System.out.println("goToFlashDemo " + System.currentTimeMillis());

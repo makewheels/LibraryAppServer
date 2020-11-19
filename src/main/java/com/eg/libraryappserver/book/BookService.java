@@ -93,9 +93,8 @@ public class BookService {
      * @param bookId
      * @return
      */
-    public String getSingleBookPosition(String bookId) {
+    public Position getSingleBookPosition(String bookId) {
         List<Holding> holdingListByBookId = holdingRepository.findHoldingListByBookId(bookId);
-        String positionString = null;
         for (Holding holding : holdingListByBookId) {
             Position position = holding.getPosition();
             //如果没有position
@@ -107,10 +106,9 @@ public class BookService {
                 continue;
             }
             //只要找到一个正常的数据了，就可以返回了
-            positionString = position.getRoom() + "\n" + position.getDetailPosition();
-            break;
+            return position;
         }
-        return positionString;
+        return null;
     }
 
     /**
