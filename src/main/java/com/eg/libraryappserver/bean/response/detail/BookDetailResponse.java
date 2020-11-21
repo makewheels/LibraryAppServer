@@ -1,6 +1,6 @@
 package com.eg.libraryappserver.bean.response.detail;
 
-import com.eg.libraryappserver.bean.book.library.holding.Position;
+import com.eg.libraryappserver.bean.response.visitlibrary.PositionResponse;
 import lombok.Data;
 
 import java.util.List;
@@ -31,5 +31,5 @@ public class BookDetailResponse {
     private String pages;           //页码数
     private String catalog;         //目录
     private String summary;         //简述
-    private Position position;      //位置
+    private PositionResponse positionResponse;      //位置
 }

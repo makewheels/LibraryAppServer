@@ -9,6 +9,8 @@ import com.eg.libraryappserver.bean.response.basicinfo.BookBasicInfo;
 import com.eg.libraryappserver.bean.response.detail.BookDetailResponse;
 import com.eg.libraryappserver.bean.response.query.BookQueryRecord;
 import com.eg.libraryappserver.bean.response.query.BookQueryResponse;
+import com.eg.libraryappserver.bean.response.visitlibrary.CellInfo;
+import com.eg.libraryappserver.bean.response.visitlibrary.PositionResponse;
 import org.apache.commons.beanutils.BeanUtils;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.data.domain.PageRequest;
@@ -18,10 +20,7 @@ import org.springframework.web.bind.annotation.RequestParam;
 import org.springframework.web.bind.annotation.ResponseBody;
 
 import java.lang.reflect.InvocationTargetException;
-import java.util.ArrayList;
-import java.util.HashSet;
-import java.util.List;
-import java.util.Set;
+import java.util.*;
 
 /**
  * @time 2020-01-09 21:52
@@ -52,9 +51,8 @@ public class BookController {
      * @return
      */
     @RequestMapping("/search")
-    public String queryBook(@RequestParam String q,
-                            @RequestParam int page,
-                            @RequestParam int size) {
+    public String queryBook(
+            @RequestParam String q, @RequestParam int page, @RequestParam int size) {
         if (size != 20) {
             size = 20;
         }
@@ -105,14 +103,13 @@ public class BookController {
         bookDetailResponse.setMangoId(book.get_id());
         //搞定位置
         Position position = bookService.getSingleBookPosition(book.getBookId());
-        if (position != null) {
-            position.setPosition(null);
-            position.setCoordinate(null);
-            position.setProvider(null);
-            position.setCreateTime(null);
-            position.setUpdateTime(null);
+        PositionResponse positionResponse = new PositionResponse();
+        try {
+            BeanUtils.copyProperties(positionResponse, position);
+        } catch (IllegalAccessException | InvocationTargetException e) {
+            e.printStackTrace();
         }
-        bookDetailResponse.setPosition(position);
+        bookDetailResponse.setPositionResponse(positionResponse);
         return JSON.toJSONString(bookDetailResponse);
     }
 
@@ -126,16 +123,57 @@ public class BookController {
      * @param level
      * @return
      */
-    @RequestMapping("/getBookIdsByTargetCell")
-    public String getBookIdsByTargetCell(
-            String room, int row, String side, int shelf, int level) {
+    @RequestMapping("/getTargetCellInfo")
+    public String getTargetCellInfo(
+            String room, int row, String side, int shelf, int level)
+            throws InvocationTargetException, IllegalAccessException {
         List<Holding> booksByTargetCell
                 = bookService.getHoldingsByTargetCell(room, row, side, shelf, level);
         Set<String> bookIdSet = new HashSet<>();
         for (Holding holding : booksByTargetCell) {
             bookIdSet.add(holding.getBookId());
         }
-        return JSON.toJSONString(bookIdSet);
+        CellInfo cellInfo = new CellInfo();
+
+        List<Holding> holdingsByTargetCell = bookService.getHoldingsByTargetCell(room, row, side, shelf, level);
+        Holding holding = holdingsByTargetCell.get(0);
+        Position holdingPosition = holding.getPosition();
+        String detailPosition = holdingPosition.getDetailPosition();
+
+
+        //当前cell的书的id列表
+        cellInfo.setBookIdList(new ArrayList<>(bookIdSet));
+        PositionResponse current = new PositionResponse();
+
+        current.setDetailPosition(detailPosition);
+        current.setRoom(room);
+        current.setRow(row);
+        current.setSide(side);
+        current.setShelf(shelf);
+        current.setLevel(level);
+        cellInfo.setCurrent(current);
+
+
+        //再把隔壁position赋值
+        PositionResponse up = new PositionResponse();
+        BeanUtils.copyProperties(up, current);
+        PositionResponse down = new PositionResponse();
+        BeanUtils.copyProperties(down, current);
+        PositionResponse left = new PositionResponse();
+        BeanUtils.copyProperties(left, current);
+        PositionResponse right = new PositionResponse();
+        BeanUtils.copyProperties(right, current);
+
+        up.setLevel(current.getLevel() - 1);
+        down.setLevel(current.getLevel() + 1);
+        left.setShelf(current.getShelf() - 1);
+        right.setShelf(current.getShelf() + 1);
+
+        cellInfo.setUp(up);
+        cellInfo.setDown(down);
+        cellInfo.setLeft(left);
+        cellInfo.setRight(right);
+        return JSON.toJSONString(cellInfo);
     }
 
     /**
