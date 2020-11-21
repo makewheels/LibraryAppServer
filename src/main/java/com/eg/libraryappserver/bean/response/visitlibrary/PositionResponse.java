@@ -11,4 +11,5 @@ public class PositionResponse {
     private String side;    //面
     private int shelf;      //架
     private int level;      //层
+
 }

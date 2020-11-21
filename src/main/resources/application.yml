@@ -10,5 +10,12 @@ spring:
       port: 27017
       authentication-database: admin
       username: root
-      password: mongodpwdVEfwrAYY5ozsz
+#      password: mongodpwdVEfwrAYY5ozsz
       database: libraryapp
+
+    elasticsearch:
+      cluster-nodes: localhost:9200
+      cluster-name: elasticsearch
+#      client:
+#        reactive:
+#          username: localhost

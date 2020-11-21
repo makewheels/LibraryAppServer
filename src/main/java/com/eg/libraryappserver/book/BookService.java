@@ -3,9 +3,12 @@ package com.eg.libraryappserver.book;
 import com.eg.libraryappserver.bean.book.library.holding.Holding;
 import com.eg.libraryappserver.bean.book.library.holding.Position;
 import com.eg.libraryappserver.bean.book.library.holding.repository.HoldingRepository;
+import com.eg.libraryappserver.bean.response.visitlibrary.CellInfo;
+import com.eg.libraryappserver.bean.response.visitlibrary.PositionResponse;
 import com.eg.libraryappserver.crawl.booklist.KeyValue;
 import com.eg.libraryappserver.crawl.booklist.KeyValueRepository;
 import com.eg.libraryappserver.util.KeyValueConstants;
+import org.apache.commons.beanutils.BeanUtils;
 import org.apache.commons.collections4.CollectionUtils;
 import org.apache.commons.lang3.StringUtils;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -14,7 +17,11 @@ import org.springframework.data.mongodb.core.query.Criteria;
 import org.springframework.data.mongodb.core.query.Query;
 import org.springframework.stereotype.Service;
 
+import java.lang.reflect.InvocationTargetException;
+import java.util.ArrayList;
+import java.util.HashSet;
 import java.util.List;
+import java.util.Set;
 
 /**
  * @time 2020-04-23 09:46
@@ -143,4 +150,67 @@ public class BookService {
         query.limit(12);
         return mongoTemplate.find(query, Holding.class);
     }
+
+    /**
+     * 获取指定位置cell的info
+     *
+     * @param room
+     * @param row
+     * @param side
+     * @param shelf
+     * @param level
+     * @return
+     * @throws InvocationTargetException
+     * @throws IllegalAccessException
+     */
+    public CellInfo getTargetCellInfo(String room, int row, String side, int shelf, int level)
+            throws InvocationTargetException, IllegalAccessException {
+        //TODO
+        List<Holding> holdingsByTargetCell = getHoldingsByTargetCell(room, row, side, shelf, level);
+        Set<String> bookIdSet = new HashSet<>();
+        for (Holding holding : holdingsByTargetCell) {
+            bookIdSet.add(holding.getBookId());
+        }
+
+        CellInfo cellInfo = new CellInfo();
+        Holding holding = holdingsByTargetCell.get(0);
+        Position holdingPosition = holding.getPosition();
+        String detailPosition = holdingPosition.getDetailPosition();
+
+
+        //当前cell的书的id列表
+        cellInfo.setBookIdList(new ArrayList<>(bookIdSet));
+        PositionResponse current = new PositionResponse();
+
+        current.setDetailPosition(detailPosition);
+        current.setRoom(room);
+        current.setRow(row);
+        current.setSide(side);
+        current.setShelf(shelf);
+        current.setLevel(level);
+        cellInfo.setCurrent(current);
+
+        //再把隔壁position赋值
+        PositionResponse up = new PositionResponse();
+        BeanUtils.copyProperties(up, current);
+        PositionResponse down = new PositionResponse();
+        BeanUtils.copyProperties(down, current);
+        PositionResponse left = new PositionResponse();
+        BeanUtils.copyProperties(left, current);
+        PositionResponse right = new PositionResponse();
+        BeanUtils.copyProperties(right, current);
+
+        up.setLevel(current.getLevel() - 1);
+        down.setLevel(current.getLevel() + 1);
+        left.setShelf(current.getShelf() - 1);
+        right.setShelf(current.getShelf() + 1);
+
+        cellInfo.setUp(up);
+        cellInfo.setDown(down);
+        cellInfo.setLeft(left);
+        cellInfo.setRight(right);
+        return cellInfo;
+    }
+
+
 }

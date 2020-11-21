@@ -15,4 +15,5 @@ public class BarcodePosition {
     private String message;
     private long timestamp;
     private String sign;
+
 }

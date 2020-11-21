@@ -10,6 +10,7 @@ import java.util.Date;
  * @time 2020-04-22 22:30
  */
 @Data
+//加入es搜索
 public class Position {
     private String message;      //图书未上架，无法定位！ 非自助借还(RFID)图书，无法定位！
     private String provider;

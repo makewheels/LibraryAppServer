@@ -3,7 +3,6 @@ package com.eg.libraryappserver.book;
 import com.alibaba.fastjson.JSON;
 import com.eg.libraryappserver.bean.book.Book;
 import com.eg.libraryappserver.bean.book.BookRepository;
-import com.eg.libraryappserver.bean.book.library.holding.Holding;
 import com.eg.libraryappserver.bean.book.library.holding.Position;
 import com.eg.libraryappserver.bean.response.basicinfo.BookBasicInfo;
 import com.eg.libraryappserver.bean.response.detail.BookDetailResponse;
@@ -20,7 +19,8 @@ import org.springframework.web.bind.annotation.RequestParam;
 import org.springframework.web.bind.annotation.ResponseBody;
 
 import java.lang.reflect.InvocationTargetException;
-import java.util.*;
+import java.util.ArrayList;
+import java.util.List;
 
 /**
  * @time 2020-01-09 21:52
@@ -127,52 +127,7 @@ public class BookController {
     public String getTargetCellInfo(
             String room, int row, String side, int shelf, int level)
             throws InvocationTargetException, IllegalAccessException {
-        List<Holding> booksByTargetCell
-                = bookService.getHoldingsByTargetCell(room, row, side, shelf, level);
-        Set<String> bookIdSet = new HashSet<>();
-        for (Holding holding : booksByTargetCell) {
-            bookIdSet.add(holding.getBookId());
-        }
-        CellInfo cellInfo = new CellInfo();
-
-        List<Holding> holdingsByTargetCell = bookService.getHoldingsByTargetCell(room, row, side, shelf, level);
-        Holding holding = holdingsByTargetCell.get(0);
-        Position holdingPosition = holding.getPosition();
-        String detailPosition = holdingPosition.getDetailPosition();
-
-
-        //当前cell的书的id列表
-        cellInfo.setBookIdList(new ArrayList<>(bookIdSet));
-        PositionResponse current = new PositionResponse();
-
-        current.setDetailPosition(detailPosition);
-        current.setRoom(room);
-        current.setRow(row);
-        current.setSide(side);
-        current.setShelf(shelf);
-        current.setLevel(level);
-        cellInfo.setCurrent(current);
-
-
-        //再把隔壁position赋值
-        PositionResponse up = new PositionResponse();
-        BeanUtils.copyProperties(up, current);
-        PositionResponse down = new PositionResponse();
-        BeanUtils.copyProperties(down, current);
-        PositionResponse left = new PositionResponse();
-        BeanUtils.copyProperties(left, current);
-        PositionResponse right = new PositionResponse();
-        BeanUtils.copyProperties(right, current);
-
-        up.setLevel(current.getLevel() - 1);
-        down.setLevel(current.getLevel() + 1);
-        left.setShelf(current.getShelf() - 1);
-        right.setShelf(current.getShelf() + 1);
-
-        cellInfo.setUp(up);
-        cellInfo.setDown(down);
-        cellInfo.setLeft(left);
-        cellInfo.setRight(right);
+        CellInfo cellInfo = bookService.getTargetCellInfo(room, row, side, shelf, level);
         return JSON.toJSONString(cellInfo);
     }
 
