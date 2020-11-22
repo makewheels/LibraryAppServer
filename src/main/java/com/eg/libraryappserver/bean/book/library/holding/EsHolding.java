@@ -15,7 +15,9 @@ public class EsHolding {
 
     private String mongoId;
     private String bookId;
-    private Position position;
+
+    @Field(type = FieldType.Boolean)
+    private boolean hasPosition;//是否有位置
 
     @Field(type = FieldType.Text)
     private String room;    //文献借阅一室

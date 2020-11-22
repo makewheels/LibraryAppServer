@@ -4,6 +4,9 @@ server:
   port: 5001
 
 spring:
+  elasticsearch:
+    jest:
+      uris:http://localhost:9200
   data:
     mongodb:
       host: localhost
@@ -14,8 +17,5 @@ spring:
       database: libraryapp
 
     elasticsearch:
-      cluster-nodes: localhost:9200
+      cluster-nodes: localhost:9300
       cluster-name: elasticsearch
-#      client:
-#        reactive:
-#          username: localhost
