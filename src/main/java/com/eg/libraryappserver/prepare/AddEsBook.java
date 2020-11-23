@@ -26,30 +26,30 @@ public class AddEsBook {
 
     @Test
     public void addBookToElasticSearch() {
-//        for (int i = 0; i < 2000; i++) {
-        Query query = new Query();
-        query.skip(200 * 1);
-        query.limit(1);
-        List<Book> bookList = mongoTemplate.find(query, Book.class);
-        for (Book book : bookList) {
-            //先查询elastic search，如果已经存在则更新
-            EsBook esBook = esBookRepository.findByBookId(book.getBookId());
-            if (esBook == null) {
-                esBook = new EsBook();
-            } else {
-                System.out.println("update: " + book.getBookId() + ", " + book.getTitle());
+        for (int i = 0; i < 2000; i++) {
+            Query query = new Query();
+            query.skip(200 * i);
+            query.limit(1);
+            List<Book> bookList = mongoTemplate.find(query, Book.class);
+            for (Book book : bookList) {
+                //先查询elastic search，如已存在则跳过
+                EsBook esBook = esBookRepository.findByBookId(book.getBookId());
+                if (esBook == null) {
+                    esBook = new EsBook();
+                } else {
+                    System.out.println("skip: " + book.getBookId() + ", " + book.getTitle());
+                    continue;
+                }
+                try {
+                    BeanUtils.copyProperties(esBook, book);
+                } catch (IllegalAccessException | InvocationTargetException e) {
+                    e.printStackTrace();
+                }
+                esBook.setMongoId(book.get_id());
+                esBook.setId(null);
+                esBookRepository.save(esBook);
+                System.out.println(esBook.getId());
             }
-            try {
-                BeanUtils.copyProperties(esBook, book);
-            } catch (IllegalAccessException | InvocationTargetException e) {
-                e.printStackTrace();
-            }
-            esBook.setMongoId(book.get_id());
-            esBook.setId(null);
-            System.out.println(esBook);
-//            esBookRepository.save(esBook);
         }
-
-//        }
     }
 }

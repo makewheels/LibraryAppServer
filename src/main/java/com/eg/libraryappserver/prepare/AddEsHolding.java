@@ -32,12 +32,13 @@ public class AddEsHolding {
             query.limit(200);
             List<Holding> holdingList = mongoTemplate.find(query, Holding.class);
             for (Holding holding : holdingList) {
-                //更新插入
+                //先查询elastic search，如已存在则跳过
                 EsHolding esHolding = esHoldingRepository.findByMongoId(holding.get_id());
                 if (esHolding == null) {
                     esHolding = new EsHolding();
                 } else {
-                    System.out.println("update: " + holding.getBookId());
+                    System.out.println("skip: " + holding.getBookId());
+                    continue;
                 }
                 esHolding.setMongoId(holding.get_id());
                 esHolding.setBookId(holding.getBookId());

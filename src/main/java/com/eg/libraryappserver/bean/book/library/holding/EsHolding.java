@@ -6,6 +6,8 @@ import org.springframework.data.elasticsearch.annotations.Document;
 import org.springframework.data.elasticsearch.annotations.Field;
 import org.springframework.data.elasticsearch.annotations.FieldType;
 
+import java.util.Objects;
+
 @Data
 @Document(indexName = "holding", type = "doc", useServerConfiguration = true)
 public class EsHolding {
@@ -36,4 +38,24 @@ public class EsHolding {
     @Field(type = FieldType.Integer)
     private int level;      //层
 
+    @Override
+    public boolean equals(Object o) {
+        if (this == o) return true;
+        if (o == null || getClass() != o.getClass()) return false;
+        EsHolding esHolding = (EsHolding) o;
+        return hasPosition == esHolding.hasPosition &&
+                row == esHolding.row &&
+                shelf == esHolding.shelf &&
+                level == esHolding.level &&
+                Objects.equals(mongoId, esHolding.mongoId) &&
+                Objects.equals(bookId, esHolding.bookId) &&
+                Objects.equals(detailPosition, esHolding.detailPosition) &&
+                Objects.equals(room, esHolding.room) &&
+                Objects.equals(side, esHolding.side);
+    }
+
+    @Override
+    public int hashCode() {
+        return Objects.hash(mongoId, bookId, hasPosition, detailPosition, room, row, side, shelf, level);
+    }
 }

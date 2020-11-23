@@ -177,7 +177,6 @@ public class BookService {
         Set<String> bookIdSet = new HashSet<>();
         for (EsHolding esHolding : esHoldingList) {
             bookIdSet.add(esHolding.getBookId());
-            System.out.println(esHolding.getId());
         }
 
         CellInfo cellInfo = new CellInfo();
@@ -187,8 +186,7 @@ public class BookService {
         cellInfo.setBookIdList(new ArrayList<>(bookIdSet));
         PositionResponse current = new PositionResponse();
 
-//        current.setDetailPosition(esHolding.getDetailPosition());
-        current.setDetailPosition("");
+        current.setDetailPosition(esHolding.getDetailPosition());
         current.setRoom(esHolding.getRoom());
         current.setRow(esHolding.getRow());
         current.setSide(esHolding.getSide());

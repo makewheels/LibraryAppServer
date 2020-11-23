@@ -4,6 +4,8 @@ import lombok.Data;
 import org.springframework.data.annotation.Id;
 import org.springframework.data.elasticsearch.annotations.Document;
 
+import java.util.Objects;
+
 @Data
 @Document(indexName = "book", type = "doc", useServerConfiguration = true)
 public class EsBook {
@@ -23,4 +25,27 @@ public class EsBook {
     private String publishDate;     //出版日期
     private String catalog;         //目录
     private String summary;         //简述
+
+    @Override
+    public boolean equals(Object o) {
+        if (this == o) return true;
+        if (o == null || getClass() != o.getClass()) return false;
+        EsBook esBook = (EsBook) o;
+        return Objects.equals(mongoId, esBook.mongoId) &&
+                Objects.equals(bookId, esBook.bookId) &&
+                Objects.equals(isbn, esBook.isbn) &&
+                Objects.equals(callno, esBook.callno) &&
+                Objects.equals(bookrecno, esBook.bookrecno) &&
+                Objects.equals(title, esBook.title) &&
+                Objects.equals(author, esBook.author) &&
+                Objects.equals(publisher, esBook.publisher) &&
+                Objects.equals(publishDate, esBook.publishDate) &&
+                Objects.equals(catalog, esBook.catalog) &&
+                Objects.equals(summary, esBook.summary);
+    }
+
+    @Override
+    public int hashCode() {
+        return Objects.hash(mongoId, bookId, isbn, callno, bookrecno, title, author, publisher, publishDate, catalog, summary);
+    }
 }
