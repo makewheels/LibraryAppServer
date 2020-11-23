@@ -173,7 +173,6 @@ public class BookService {
         List<EsHolding> esHoldingList =
                 esHoldingRepository.findByHasPositionAndRoomAndShelfAndSideAndRowAndLevel(
                         true, room, shelf, side, row, level);
-
         Set<String> bookIdSet = new HashSet<>();
         for (EsHolding esHolding : esHoldingList) {
             bookIdSet.add(esHolding.getBookId());
@@ -195,6 +194,10 @@ public class BookService {
         cellInfo.setCurrent(current);
 
         //再把隔壁position赋值
+        //TODO
+        List<EsHolding> list = esHoldingRepository.findByHasPositionAndRoomAndShelfAndSideAndRowAndLevel(
+                true, room, shelf, side, row, level);
+
         PositionResponse up = new PositionResponse();
         BeanUtils.copyProperties(up, current);
         PositionResponse down = new PositionResponse();

@@ -29,17 +29,16 @@ public class AddEsBook {
         for (int i = 0; i < 2000; i++) {
             Query query = new Query();
             query.skip(200 * i);
-            query.limit(1);
+            query.limit(200);
             List<Book> bookList = mongoTemplate.find(query, Book.class);
             for (Book book : bookList) {
                 //先查询elastic search，如已存在则跳过
                 EsBook esBook = esBookRepository.findByBookId(book.getBookId());
-                if (esBook == null) {
-                    esBook = new EsBook();
-                } else {
+                if (esBook != null) {
                     System.out.println("skip: " + book.getBookId() + ", " + book.getTitle());
                     continue;
                 }
+                esBook = new EsBook();
                 try {
                     BeanUtils.copyProperties(esBook, book);
                 } catch (IllegalAccessException | InvocationTargetException e) {

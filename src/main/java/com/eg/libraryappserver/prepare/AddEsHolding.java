@@ -34,12 +34,11 @@ public class AddEsHolding {
             for (Holding holding : holdingList) {
                 //先查询elastic search，如已存在则跳过
                 EsHolding esHolding = esHoldingRepository.findByMongoId(holding.get_id());
-                if (esHolding == null) {
-                    esHolding = new EsHolding();
-                } else {
+                if (esHolding != null) {
                     System.out.println("skip: " + holding.getBookId());
                     continue;
                 }
+                esHolding = new EsHolding();
                 esHolding.setMongoId(holding.get_id());
                 esHolding.setBookId(holding.getBookId());
                 Position position = holding.getPosition();
