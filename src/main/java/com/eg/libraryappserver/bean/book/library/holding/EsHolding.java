@@ -7,17 +7,19 @@ import org.springframework.data.elasticsearch.annotations.Field;
 import org.springframework.data.elasticsearch.annotations.FieldType;
 
 @Data
-@Document(indexName = "holding", type = "doc",
-        useServerConfiguration = true, createIndex = false)
+@Document(indexName = "holding", type = "doc", useServerConfiguration = true)
 public class EsHolding {
     @Id
-    private Integer id;
+    private String id;
 
     private String mongoId;
     private String bookId;
 
     @Field(type = FieldType.Boolean)
     private boolean hasPosition;//是否有位置
+
+    @Field(type = FieldType.Text)
+    private String detailPosition;//具体的位置
 
     @Field(type = FieldType.Text)
     private String room;    //文献借阅一室

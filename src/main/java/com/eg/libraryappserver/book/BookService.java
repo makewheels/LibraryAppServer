@@ -1,7 +1,9 @@
 package com.eg.libraryappserver.book;
 
+import com.eg.libraryappserver.bean.book.library.holding.EsHolding;
 import com.eg.libraryappserver.bean.book.library.holding.Holding;
 import com.eg.libraryappserver.bean.book.library.holding.Position;
+import com.eg.libraryappserver.bean.book.library.holding.repository.EsHoldingRepository;
 import com.eg.libraryappserver.bean.book.library.holding.repository.HoldingRepository;
 import com.eg.libraryappserver.bean.response.visitlibrary.CellInfo;
 import com.eg.libraryappserver.bean.response.visitlibrary.PositionResponse;
@@ -17,6 +19,7 @@ import org.springframework.data.mongodb.core.query.Criteria;
 import org.springframework.data.mongodb.core.query.Query;
 import org.springframework.stereotype.Service;
 
+import javax.annotation.Resource;
 import java.lang.reflect.InvocationTargetException;
 import java.util.ArrayList;
 import java.util.HashSet;
@@ -31,6 +34,9 @@ public class BookService {
     private KeyValueRepository keyValueRepository;
     private MongoTemplate mongoTemplate;
     private HoldingRepository holdingRepository;
+
+    @Resource
+    private EsHoldingRepository esHoldingRepository;
 
     @Autowired
     public void setKeyValueRepository(KeyValueRepository keyValueRepository) {
@@ -140,13 +146,12 @@ public class BookService {
         Holding holding = new Holding();
         holding.setPosition(position);
         Query query = new Query();
-        query.addCriteria(
-                Criteria.where("position.room").is(room)
-                        .and("position.row").is(row)
-                        .and("position.side").is(side)
-                        .and("position.shelf").is(shelf)
-                        .and("position.level").is(level)
-        );
+        Criteria criteria = Criteria.where("position.room").is(room)
+                .and("position.row").is(row)
+                .and("position.side").is(side)
+                .and("position.shelf").is(shelf)
+                .and("position.level").is(level);
+        query.addCriteria(criteria);
         query.limit(12);
         return mongoTemplate.find(query, Holding.class);
     }
@@ -165,29 +170,30 @@ public class BookService {
      */
     public CellInfo getTargetCellInfo(String room, int row, String side, int shelf, int level)
             throws InvocationTargetException, IllegalAccessException {
-        //TODO
-        List<Holding> holdingsByTargetCell = getHoldingsByTargetCell(room, row, side, shelf, level);
+        List<EsHolding> esHoldingList =
+                esHoldingRepository.findByHasPositionAndRoomAndShelfAndSideAndRowAndLevel(
+                        true, room, shelf, side, row, level);
+
         Set<String> bookIdSet = new HashSet<>();
-        for (Holding holding : holdingsByTargetCell) {
-            bookIdSet.add(holding.getBookId());
+        for (EsHolding esHolding : esHoldingList) {
+            bookIdSet.add(esHolding.getBookId());
+            System.out.println(esHolding.getId());
         }
 
         CellInfo cellInfo = new CellInfo();
-        Holding holding = holdingsByTargetCell.get(0);
-        Position holdingPosition = holding.getPosition();
-        String detailPosition = holdingPosition.getDetailPosition();
-
+        EsHolding esHolding = esHoldingList.get(0);
 
         //当前cell的书的id列表
         cellInfo.setBookIdList(new ArrayList<>(bookIdSet));
         PositionResponse current = new PositionResponse();
 
-        current.setDetailPosition(detailPosition);
-        current.setRoom(room);
-        current.setRow(row);
-        current.setSide(side);
-        current.setShelf(shelf);
-        current.setLevel(level);
+//        current.setDetailPosition(esHolding.getDetailPosition());
+        current.setDetailPosition("");
+        current.setRoom(esHolding.getRoom());
+        current.setRow(esHolding.getRow());
+        current.setSide(esHolding.getSide());
+        current.setShelf(esHolding.getShelf());
+        current.setLevel(esHolding.getLevel());
         cellInfo.setCurrent(current);
 
         //再把隔壁position赋值
@@ -211,6 +217,5 @@ public class BookService {
         cellInfo.setRight(right);
         return cellInfo;
     }
-
 
 }

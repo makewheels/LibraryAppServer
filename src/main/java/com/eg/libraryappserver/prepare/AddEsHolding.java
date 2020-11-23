@@ -18,21 +18,27 @@ import java.util.List;
 
 @RunWith(SpringRunner.class)
 @SpringBootTest(classes = LibraryAppServerApplication.class)
-public class PrepareHoldingElasticSearch {
+public class AddEsHolding {
     @Resource
     private MongoTemplate mongoTemplate;
     @Resource
     private EsHoldingRepository esHoldingRepository;
 
     @Test
-    public void testAdd() {
+    public void addHoldingsToElasticSearch() {
         for (int i = 0; i < 3500; i++) {
             Query query = new Query();
             query.skip(200 * i);
             query.limit(200);
             List<Holding> holdingList = mongoTemplate.find(query, Holding.class);
             for (Holding holding : holdingList) {
-                EsHolding esHolding = new EsHolding();
+                //更新插入
+                EsHolding esHolding = esHoldingRepository.findByMongoId(holding.get_id());
+                if (esHolding == null) {
+                    esHolding = new EsHolding();
+                } else {
+                    System.out.println("update: " + holding.getBookId());
+                }
                 esHolding.setMongoId(holding.get_id());
                 esHolding.setBookId(holding.getBookId());
                 Position position = holding.getPosition();
@@ -42,17 +48,17 @@ public class PrepareHoldingElasticSearch {
                 } else {
                     //如果有位置
                     esHolding.setHasPosition(true);
+                    esHolding.setDetailPosition(position.getDetailPosition());
                     esHolding.setRoom(position.getRoom());
                     esHolding.setRow(position.getRow());
                     esHolding.setSide(position.getSide());
                     esHolding.setShelf(position.getShelf());
                     esHolding.setLevel(position.getLevel());
                 }
-                System.out.println(esHolding);
                 //存入elastic search
-                esHoldingRepository.save(esHolding);
+                EsHolding save = esHoldingRepository.save(esHolding);
+                System.out.println(save);
             }
         }
-
     }
 }
