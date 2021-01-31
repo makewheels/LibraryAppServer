@@ -2,8 +2,8 @@ package com.eg.libraryappserver.book;
 
 import com.alibaba.fastjson.JSON;
 import com.eg.libraryappserver.bean.book.Book;
-import com.eg.libraryappserver.bean.book.repository.BookRepository;
 import com.eg.libraryappserver.bean.book.library.holding.Position;
+import com.eg.libraryappserver.bean.book.repository.BookRepository;
 import com.eg.libraryappserver.bean.response.basicinfo.BookBasicInfo;
 import com.eg.libraryappserver.bean.response.detail.BookDetailResponse;
 import com.eg.libraryappserver.bean.response.query.BookQueryRecord;
@@ -13,10 +13,9 @@ import com.eg.libraryappserver.bean.response.visitlibrary.PositionResponse;
 import org.apache.commons.beanutils.BeanUtils;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.data.domain.PageRequest;
-import org.springframework.stereotype.Controller;
 import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RequestParam;
-import org.springframework.web.bind.annotation.ResponseBody;
+import org.springframework.web.bind.annotation.RestController;
 
 import java.lang.reflect.InvocationTargetException;
 import java.util.ArrayList;
@@ -25,9 +24,8 @@ import java.util.List;
 /**
  * @time 2020-01-09 21:52
  */
-@Controller
+@RestController
 @RequestMapping("/book")
-@ResponseBody
 public class BookController {
     private BookService bookService;
     private BookRepository bookRepository;
