@@ -5,5 +5,6 @@ import org.springframework.data.jpa.repository.JpaRepository;
 import org.springframework.stereotype.Repository;
 
 @Repository
-public interface MysqlBookRepository extends JpaRepository<MysqlBook, String> {
+public interface MysqlBookRepository extends JpaRepository<MysqlBook, Integer> {
+    MysqlBook findByBookId(String bookId);
 }

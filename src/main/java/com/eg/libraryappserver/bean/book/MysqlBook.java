@@ -9,7 +9,7 @@ import javax.persistence.*;
 @Data
 public class MysqlBook {
     @Id
-    @GeneratedValue(strategy = GenerationType.AUTO)
+    @GeneratedValue(strategy = GenerationType.IDENTITY)
     private Integer id;
 
     private String mongoId;

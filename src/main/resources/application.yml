@@ -7,7 +7,7 @@ spring:
   jpa:
     open-in-view: false
   datasource:
-    url: jdbc:mysql://localhost:3306/libraryapp?serverTimezone=Asia/Shanghai
+    url: jdbc:mysql://localhost:3306/libraryapp?serverTimezone=Asia/Shanghai&useUnicode=true
     username: root
     password: mysqlmima123
     driver-class-name: com.mysql.cj.jdbc.Driver

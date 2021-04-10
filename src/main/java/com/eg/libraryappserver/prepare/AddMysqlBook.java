@@ -25,7 +25,8 @@ public class AddMysqlBook {
 
     private void addBookToMysql(Book book) {
         //先查询MySQL，如已存在则跳过
-        if (mysqlBookRepository.findById(book.getBookId()).isPresent()) {
+        MysqlBook byBookId = mysqlBookRepository.findByBookId(book.getBookId());
+        if (byBookId != null) {
             System.out.println("skip: " + book.getBookId() + ", " + book.getTitle());
             return;
         }
