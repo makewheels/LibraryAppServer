@@ -4,6 +4,13 @@ server:
   port: 5001
 
 spring:
+  jpa:
+    open-in-view: false
+  datasource:
+    url: jdbc:mysql://localhost:3306/libraryapp?serverTimezone=Asia/Shanghai
+    username: root
+    password: mysqlmima123
+    driver-class-name: com.mysql.cj.jdbc.Driver
   elasticsearch:
     jest:
       uris:http://localhost:9200
@@ -13,7 +20,7 @@ spring:
       port: 27017
       authentication-database: admin
       username: root
-#      password: <MongoDB PASSWORD>
+      #      password: <MongoDB PASSWORD>
       database: libraryapp
 
     elasticsearch:
