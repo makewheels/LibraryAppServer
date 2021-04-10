@@ -1,19 +1,16 @@
 package com.eg.libraryappserver.bean.book;
 
 import lombok.Data;
-import lombok.EqualsAndHashCode;
 import org.springframework.data.annotation.Id;
 import org.springframework.data.elasticsearch.annotations.Document;
 import org.springframework.data.elasticsearch.annotations.Field;
 import org.springframework.data.elasticsearch.annotations.FieldType;
 
 @Data
-@EqualsAndHashCode
-@Document(indexName = "book", type = "doc", useServerConfiguration = true)
-
+@Document(indexName = "book")
 public class EsBook {
     @Id
-    private String _id;
+    private String id;
 
     @Field(type = FieldType.Keyword)
     private String mongoId;
@@ -30,7 +27,7 @@ public class EsBook {
     @Field(type = FieldType.Keyword)
     private String bookrecno;       //书的id，例如：127796
 
-    @Field(type = FieldType.Text, analyzer = "ik_max_word")
+    @Field(type = FieldType.Text, analyzer = "ik_max_wordfwe")
     private String title;           //书名
 
     @Field(type = FieldType.Text, analyzer = "ik_max_word")
