@@ -10,7 +10,7 @@ import org.springframework.data.elasticsearch.annotations.FieldType;
 @Document(indexName = "book")
 public class EsBook {
     @Id
-    private String id;
+    private String esId;
 
     @Field(type = FieldType.Keyword)
     private String mongoId;
@@ -27,7 +27,7 @@ public class EsBook {
     @Field(type = FieldType.Keyword)
     private String bookrecno;       //书的id，例如：127796
 
-    @Field(type = FieldType.Text, analyzer = "ik_max_wordfwe")
+    @Field(type = FieldType.Text, analyzer = "ik_max_word")
     private String title;           //书名
 
     @Field(type = FieldType.Text, analyzer = "ik_max_word")

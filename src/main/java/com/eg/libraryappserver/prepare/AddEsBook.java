@@ -40,7 +40,8 @@ public class AddEsBook {
         //从mongo拷贝过来的_id，存入elastic search时置为null
 //        esBook.set_id(null);
         esBookRepository.save(esBook);
-        System.out.println(Thread.currentThread().getName() + " " + JSON.toJSONString(esBook));
+        System.out.println(Thread.currentThread().getName() + " "
+                + esBook.getEsId() + " " + JSON.toJSONString(esBook));
     }
 
     @Test

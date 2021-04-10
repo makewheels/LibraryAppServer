@@ -12,7 +12,7 @@ import org.springframework.data.elasticsearch.annotations.FieldType;
 @Document(indexName = "holding", type = "doc", useServerConfiguration = true)
 public class EsHolding {
     @Id
-    private String id;
+    private String esId;
 
     @Field(type = FieldType.Keyword)
     private String mongoId;
