@@ -37,7 +37,8 @@ public class AddEsBook {
         esBook = new EsBook();
         BeanUtils.copyProperties(book, esBook);
         esBook.setMongoId(book.get_id());
-        esBook.setId(null);
+        //从mongo拷贝过来的_id，存入elastic search时置为null
+        esBook.set_id(null);
         esBookRepository.save(esBook);
         System.out.println(Thread.currentThread().getName() + " " + JSON.toJSONString(esBook));
     }

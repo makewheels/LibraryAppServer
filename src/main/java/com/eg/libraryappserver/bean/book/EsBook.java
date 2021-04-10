@@ -13,7 +13,7 @@ import org.springframework.data.elasticsearch.annotations.FieldType;
 
 public class EsBook {
     @Id
-    private String id;
+    private String _id;
 
     @Field(type = FieldType.Keyword)
     private String mongoId;
