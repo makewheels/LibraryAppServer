@@ -1,5 +1,6 @@
 package com.eg.libraryappserver.prepare;
 
+import com.alibaba.fastjson.JSON;
 import com.eg.libraryappserver.LibraryAppServerApplication;
 import com.eg.libraryappserver.bean.book.library.holding.EsHolding;
 import com.eg.libraryappserver.bean.book.library.holding.Holding;
@@ -57,7 +58,7 @@ public class AddEsHolding {
                 }
                 //存入elastic search
                 EsHolding save = esHoldingRepository.save(esHolding);
-                System.out.println(save);
+                System.out.println(JSON.toJSONString(save));
             }
         }
     }
