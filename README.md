@@ -52,3 +52,14 @@ character-set-client-handshake=FALSE
 collation-server=utf8mb4_unicode_ci
 init_connect='SET NAMES utf8mb4'
 ```
+
+##MongoDB查询语句
+```js
+db.book.find({
+    $or:[
+        {"title":/哈利/},
+        {"catalog":/哈利/},
+        {"summary":/哈利/}
+    ]
+}).limit(100)
+```

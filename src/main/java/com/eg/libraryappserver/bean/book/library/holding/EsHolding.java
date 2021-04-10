@@ -9,7 +9,7 @@ import org.springframework.data.elasticsearch.annotations.FieldType;
 
 @Data
 @EqualsAndHashCode
-@Document(indexName = "holding", type = "doc", useServerConfiguration = true)
+@Document(indexName = "holding", type = "docs")
 public class EsHolding {
     @Id
     private String esId;
