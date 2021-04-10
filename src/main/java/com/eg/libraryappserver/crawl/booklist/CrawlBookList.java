@@ -3,7 +3,6 @@ package com.eg.libraryappserver.crawl.booklist;
 import com.alibaba.fastjson.JSON;
 import com.alibaba.fastjson.JSONObject;
 import com.eg.libraryappserver.bean.book.Book;
-import com.eg.libraryappserver.bean.book.repository.BookRepository;
 import com.eg.libraryappserver.bean.book.douban.FromDouban;
 import com.eg.libraryappserver.bean.book.library.FromLibrary;
 import com.eg.libraryappserver.bean.book.library.holding.BorrowRecord;
@@ -12,8 +11,8 @@ import com.eg.libraryappserver.bean.book.library.holding.repository.BorrowRecord
 import com.eg.libraryappserver.bean.book.library.holding.repository.HoldingRepository;
 import com.eg.libraryappserver.bean.book.library.imageapi.LibraryImageApiResult;
 import com.eg.libraryappserver.bean.book.library.imageapi.Result;
+import com.eg.libraryappserver.bean.book.repository.BookRepository;
 import com.eg.libraryappserver.util.*;
-import org.apache.commons.beanutils.BeanUtils;
 import org.apache.commons.collections4.CollectionUtils;
 import org.apache.commons.lang3.RandomStringUtils;
 import org.apache.commons.lang3.StringUtils;
@@ -21,13 +20,13 @@ import org.jsoup.nodes.Element;
 import org.jsoup.select.Elements;
 import org.junit.Test;
 import org.junit.runner.RunWith;
+import org.springframework.beans.BeanUtils;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.test.context.SpringBootTest;
 import org.springframework.test.context.junit4.SpringRunner;
 import us.codecraft.xsoup.Xsoup;
 
 import java.io.UnsupportedEncodingException;
-import java.lang.reflect.InvocationTargetException;
 import java.net.URLEncoder;
 import java.util.*;
 import java.util.concurrent.ExecutorService;
@@ -303,11 +302,7 @@ public class CrawlBookList {
                     holding.setBookId(findHolding.getBookId());
                     holding.setUpdateTime(new Date());
                     holding.setCreateTime(findHolding.getCreateTime());
-                    try {
-                        BeanUtils.copyProperties(findHolding, holding);
-                    } catch (IllegalAccessException | InvocationTargetException e) {
-                        e.printStackTrace();
-                    }
+                    BeanUtils.copyProperties(findHolding, holding);
                     holdingRepository.save(findHolding);
                 }
             }
@@ -470,11 +465,7 @@ public class CrawlBookList {
                 book.setBookId(findBook.getBookId());
                 book.setUpdateTime(new Date());
                 book.setCreateTime(findBook.getCreateTime());
-                try {
-                    BeanUtils.copyProperties(findBook, book);
-                } catch (IllegalAccessException | InvocationTargetException e) {
-                    e.printStackTrace();
-                }
+                BeanUtils.copyProperties(findBook, book);
                 bookRepository.save(findBook);
             }
             System.out.println("save to database: " + book.getFromLibrary().getTitle()

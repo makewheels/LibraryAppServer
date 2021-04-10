@@ -10,9 +10,9 @@ import com.eg.libraryappserver.bean.response.visitlibrary.PositionResponse;
 import com.eg.libraryappserver.crawl.booklist.KeyValue;
 import com.eg.libraryappserver.crawl.booklist.KeyValueRepository;
 import com.eg.libraryappserver.util.KeyValueConstants;
-import org.apache.commons.beanutils.BeanUtils;
 import org.apache.commons.collections4.CollectionUtils;
 import org.apache.commons.lang3.StringUtils;
+import org.springframework.beans.BeanUtils;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.data.mongodb.core.MongoTemplate;
 import org.springframework.data.mongodb.core.query.Criteria;
@@ -20,7 +20,6 @@ import org.springframework.data.mongodb.core.query.Query;
 import org.springframework.stereotype.Service;
 
 import javax.annotation.Resource;
-import java.lang.reflect.InvocationTargetException;
 import java.util.ArrayList;
 import java.util.HashSet;
 import java.util.List;
@@ -165,11 +164,8 @@ public class BookService {
      * @param shelf
      * @param level
      * @return
-     * @throws InvocationTargetException
-     * @throws IllegalAccessException
      */
-    public CellInfo getTargetCellInfo(String room, int row, String side, int shelf, int level)
-            throws InvocationTargetException, IllegalAccessException {
+    public CellInfo getTargetCellInfo(String room, int row, String side, int shelf, int level) {
         List<EsHolding> esHoldingList =
                 esHoldingRepository.findByHasPositionAndRoomAndShelfAndSideAndRowAndLevel(
                         true, room, shelf, side, row, level);
@@ -199,13 +195,13 @@ public class BookService {
                 true, room, shelf, side, row, level);
 
         PositionResponse up = new PositionResponse();
-        BeanUtils.copyProperties(up, current);
+        BeanUtils.copyProperties(current, up);
         PositionResponse down = new PositionResponse();
-        BeanUtils.copyProperties(down, current);
+        BeanUtils.copyProperties(current, down);
         PositionResponse left = new PositionResponse();
-        BeanUtils.copyProperties(left, current);
+        BeanUtils.copyProperties(current, left);
         PositionResponse right = new PositionResponse();
-        BeanUtils.copyProperties(right, current);
+        BeanUtils.copyProperties(current, right);
 
         up.setLevel(current.getLevel() - 1);
         down.setLevel(current.getLevel() + 1);

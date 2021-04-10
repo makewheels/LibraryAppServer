@@ -13,7 +13,7 @@ spring:
       port: 27017
       authentication-database: admin
       username: root
-      password: <MongoDB PASSWORD>
+#      password: <MongoDB PASSWORD>
       database: libraryapp
 
     elasticsearch:

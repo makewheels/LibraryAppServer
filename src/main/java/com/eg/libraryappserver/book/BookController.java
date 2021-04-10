@@ -10,7 +10,7 @@ import com.eg.libraryappserver.bean.response.query.BookQueryRecord;
 import com.eg.libraryappserver.bean.response.query.BookQueryResponse;
 import com.eg.libraryappserver.bean.response.visitlibrary.CellInfo;
 import com.eg.libraryappserver.bean.response.visitlibrary.PositionResponse;
-import org.apache.commons.beanutils.BeanUtils;
+import org.springframework.beans.BeanUtils;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.data.domain.PageRequest;
 import org.springframework.web.bind.annotation.RequestMapping;
@@ -69,11 +69,7 @@ public class BookController {
         for (Book book : booksByTitle) {
             BookQueryRecord bookQueryRecord = new BookQueryRecord();
             //拷贝属性
-            try {
-                BeanUtils.copyProperties(bookQueryRecord, book);
-            } catch (IllegalAccessException | InvocationTargetException e) {
-                e.printStackTrace();
-            }
+            BeanUtils.copyProperties(book, bookQueryRecord);
             //设置mango id
             bookQueryRecord.setMangoId(book.get_id());
             bookQueryRecordList.add(bookQueryRecord);
@@ -93,20 +89,12 @@ public class BookController {
         Book book = bookRepository.findById(mangoId).get();
         BookDetailResponse bookDetailResponse = new BookDetailResponse();
         //拷贝属性
-        try {
-            BeanUtils.copyProperties(bookDetailResponse, book);
-        } catch (IllegalAccessException | InvocationTargetException e) {
-            e.printStackTrace();
-        }
+        BeanUtils.copyProperties(book, bookDetailResponse);
         bookDetailResponse.setMangoId(book.get_id());
         //搞定位置
         Position position = bookService.getSingleBookPosition(book.getBookId());
         PositionResponse positionResponse = new PositionResponse();
-        try {
-            BeanUtils.copyProperties(positionResponse, position);
-        } catch (IllegalAccessException | InvocationTargetException e) {
-            e.printStackTrace();
-        }
+        BeanUtils.copyProperties(position, positionResponse);
         bookDetailResponse.setPositionResponse(positionResponse);
         return JSON.toJSONString(bookDetailResponse);
     }
@@ -142,11 +130,7 @@ public class BookController {
         for (String bookId : bookIdList) {
             Book book = bookRepository.findBookByBookId(bookId);
             BookBasicInfo bookBasicInfo = new BookBasicInfo();
-            try {
-                BeanUtils.copyProperties(bookBasicInfo, book);
-            } catch (IllegalAccessException | InvocationTargetException e) {
-                e.printStackTrace();
-            }
+            BeanUtils.copyProperties(book, bookBasicInfo);
             bookBasicInfo.setMongoId(book.get_id());
             bookBasicInfoListList.add(bookBasicInfo);
         }
