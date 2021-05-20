@@ -26,7 +26,6 @@ public class AddEsBook {
     @Resource
     private EsBookRepository esBookRepository;
 
-
     private void addToEs(Book book) {
         //先查询elastic search，如已存在则跳过
         EsBook esBook = esBookRepository.findByBookId(book.getBookId());
